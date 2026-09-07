@@ -1,11 +1,11 @@
 # Posmedia IA Codex
 
 Base modular en Streamlit para preparar el Formato de informe de ejecución y supervisión de ATENEA.
-El usuario indica el número de proceso, carga evidencias PDF o ZIP con PDF, revisa los datos y descarga un Word diligenciado.
+El usuario indica el número de proceso, puede cargar evidencias PDF o ZIP con PDF, revisa los datos y descarga un Word diligenciado.
 
 ## Estado de la versión 0.3
 
-- Funciona la carga de evidencias, lectura de PDF con texto, extracción conservadora de datos y obligaciones IES desde una minuta opcional, revisión manual, asociación de evidencias y generación de Word y trazabilidad JSON.
+- La carga de evidencias es opcional. Cuando se aportan archivos, funciona su lectura, revisión y asociación con las obligaciones. Sin archivos, el Word indica `Sin evidencia asociada`.
 - El número del proceso se busca en `referencia_del_contrato (contratos_electronicos)` del CSV de Oracle. La consulta ignora mayúsculas, espacios y guiones; conserva la referencia original y detecta duplicados. La carga manual de Excel o CSV funciona como respaldo. La descarga de la minuta sigue pendiente.
 - La base completa número contractual, contratista, supervisor, fecha de terminación, modificaciones y objeto según el [mapeo acordado](docs/consulta_secop.md). El avance de plazo queda pendiente de confirmar su escala.
 - Las actividades y su relación con las evidencias se ingresan y revisan manualmente. No hay evaluación automática de cumplimiento, OCR, modelos de IA ni firma automática.

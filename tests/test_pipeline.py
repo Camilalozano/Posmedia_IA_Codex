@@ -24,6 +24,12 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(report.evidence[0].status.startswith('No legible'))
         self.assertTrue(report.warnings)
 
+    def test_evidence_is_optional(self):
+        data = FIXTURE.read_bytes()
+        report = prepare_report('PROC-123', ('minuta.pdf', data), [])
+        self.assertEqual(report.evidence, [])
+        self.assertTrue(any('No se cargaron evidencias' in warning for warning in report.warnings))
+
     def test_dedup_and_reject_other_formats(self):
         self.assertEqual(len(expand_inputs([('a.pdf', b'a'), ('b.pdf', b'a')])), 1)
         out = io.BytesIO()

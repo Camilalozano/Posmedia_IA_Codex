@@ -4,7 +4,7 @@ Los campos contractuales se buscan mediante expresiones regulares adaptadas de P
 
 El extractor de obligaciones adapta Extracci-nobligacionesEspecificasPosmedia: busca encabezados de obligaciones o compromisos de la institución de educación superior y marcadores consecutivos desde 1. No aplica un extractor genérico de obligaciones de otras partes. Numeraciones distintas, listas interrumpidas o encabezados no reconocidos requieren revisión manual. No se asume que la lista extraída sea completa.
 
-Las evidencias tienen un ID por sesión, nombre original, hash SHA-256, estado de lectura y páginas. Los duplicados por contenido se omiten. Las relaciones con obligaciones y las actividades son ingresadas por el usuario, sin certificación automática.
+Las evidencias son opcionales. Cuando se cargan, tienen un ID por sesión, nombre original, hash SHA-256, estado de lectura y páginas; los duplicados por contenido se omiten. Las relaciones con obligaciones y las actividades son ingresadas por el usuario, sin certificación automática. Si no se carga ninguna, el Word indica `Sin evidencia asociada`.
 
 No encontrar una modificación no demuestra que no exista. Se deja pendiente la revisión de otrosíes. Los campos de cumplimiento y firma del supervisor no se diligencian automáticamente.
 

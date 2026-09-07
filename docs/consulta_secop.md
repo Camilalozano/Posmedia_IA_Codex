@@ -31,7 +31,7 @@ Cuando Oracle responde con un error HTTP, falla la red, la respuesta está vací
 1. Escriba el número del proceso.
 2. Pulse **Consultar proceso** para usar Oracle. Si la conexión no está configurada o falla, cargue una exportación `.xlsx` o `.csv` como respaldo; la carga manual tiene prioridad. El Excel debe contener la hoja `tabla_maestra_completa`; el CSV debe usar UTF-8 y coma, punto y coma o tabulación.
 3. Revise el registro encontrado y sus datos faltantes.
-4. Cargue las evidencias y, si dispone de ella, la minuta para extraer obligaciones. Pulse **Preparar borrador**.
+4. Si dispone de archivos, cargue las evidencias y la minuta para extraer obligaciones. Ambas cargas son opcionales. Pulse **Preparar borrador**.
 5. Revise los campos y continúe con la generación del informe.
 
 Los datos disponibles de la base tienen prioridad sobre la extracción de la minuta; las diferencias se muestran para revisión. Si el número contractual de la minuta no coincide con el consultado, se bloquea la combinación. Cambiar la base, el proceso o el resultado invalida el borrador anterior.

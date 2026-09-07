@@ -43,6 +43,19 @@ class AppTests(unittest.TestCase):
         self.assertEqual(len(app.text_area), 0)
         self.assertEqual(len(app.success), 0)
 
+    def test_generate_word_without_evidence(self):
+        data = (ROOT / 'tests/fixtures/minuta_ejemplo.pdf').read_bytes()
+        app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
+        app.text_input[0].set_value('PROCESO-PRUEBA')
+        app.file_uploader(key='minuta').set_value(('minuta.pdf', data, 'application/pdf'))
+        next(x for x in app.button if x.label == 'Preparar borrador').click().run()
+        self.assertFalse(app.exception)
+        self.assertEqual(len(app.multiselect), 0)
+        self.assertTrue(any('No se cargaron evidencias' in item.value for item in app.warning))
+        next(x for x in app.button if x.label == 'Generar informe Word').click().run()
+        self.assertFalse(app.exception)
+        self.assertEqual(len(app.get('download_button')), 2)
+
     def test_connection_error_tells_admin_to_replace_par(self):
         with patch.dict('os.environ', {}, clear=False):
             app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20)

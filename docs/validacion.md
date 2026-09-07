@@ -1,5 +1,9 @@
 # Validación inicial
 
+## Evidencias opcionales
+
+La carga de evidencias dejó de ser obligatoria. Una prueba del flujo confirma que se puede preparar y descargar el Word usando una minuta sin evidencias; el documento conserva las obligaciones e indica `Sin evidencia asociada`.
+
 ## Consulta contractual de la versión 0.2
 
 Se aprobaron 19 pruebas con openpyxl 3.1.5 añadido al entorno. La consulta verifica lectura Excel y CSV, variantes de espacios, guiones y mayúsculas, rechazo de coincidencias parciales, conservación de ceros iniciales, detección de colisiones, mapeo, datos faltantes y trazabilidad. La interfaz se probó con consulta CSV, diligenciamiento y descarte de resultados al cambiar la base.

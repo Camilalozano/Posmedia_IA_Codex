@@ -16,7 +16,7 @@ def main():
     process = st.text_input('Número del proceso', placeholder='ATENEA-582-2025')
     lookup, lookup_token = lookup_panel(process)
     contract = st.file_uploader('Minuta o convenio (opcional)', type=['pdf'], key='minuta')
-    uploads = st.file_uploader('Evidencias del periodo', type=['pdf', 'zip'], accept_multiple_files=True, key='evidencias')
+    uploads = st.file_uploader('Evidencias del periodo (opcional)', type=['pdf', 'zip'], accept_multiple_files=True, key='evidencias')
     signature = hashlib.sha256()
     signature.update(process.encode())
     signature.update(lookup_token.encode())
@@ -42,13 +42,14 @@ def main():
         return
     for warning in report.warnings:
         st.warning(warning)
-    st.subheader('Evidencias recibidas')
-    st.dataframe([{'ID': e.id, 'Archivo': e.name, 'Páginas': len(e.pages), 'Estado': e.status} for e in report.evidence], hide_index=True)
-    with st.expander('Consultar el texto extraído de las evidencias'):
-        for evidence in report.evidence:
-            st.write(evidence.id + ' · ' + evidence.name)
-            for page_number, page in enumerate(evidence.pages, 1):
-                st.text('Página ' + str(page_number) + '\n' + page)
+    if report.evidence:
+        st.subheader('Evidencias recibidas')
+        st.dataframe([{'ID': e.id, 'Archivo': e.name, 'Páginas': len(e.pages), 'Estado': e.status} for e in report.evidence], hide_index=True)
+        with st.expander('Consultar el texto extraído de las evidencias'):
+            for evidence in report.evidence:
+                st.write(evidence.id + ' · ' + evidence.name)
+                for page_number, page in enumerate(evidence.pages, 1):
+                    st.text('Página ' + str(page_number) + '\n' + page)
     st.subheader('Revisar datos del informe')
     st.caption('El número del proceso se busca en la referencia contractual. Revise los datos antes de generar el informe.')
     for key in MAPPING.values():
@@ -69,8 +70,12 @@ def main():
         with st.expander(obligation.value[:140]):
             st.write(obligation.value)
             report.activities[index] = st.text_area('Actividades realizadas durante el periodo', key=fingerprint + oid + str(index) + 'act')
-            report.links[index] = st.multiselect('Evidencias que respaldan estas actividades', list(labels),
-                                                 format_func=labels.get, key=fingerprint + oid + str(index) + 'ev')
+            if labels:
+                report.links[index] = st.multiselect('Evidencias que respaldan estas actividades', list(labels),
+                                                     format_func=labels.get, key=fingerprint + oid + str(index) + 'ev')
+            else:
+                report.links[index] = []
+                st.caption('Sin evidencias cargadas para asociar.')
     st.caption('Las asociaciones son declaradas por quien prepara el informe. Los campos de cumplimiento y firma quedan para el supervisor.')
     state = hashlib.sha256(audit_json(report)).hexdigest()
     if st.session_state.get('output_state') != state:

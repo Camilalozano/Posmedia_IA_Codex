@@ -55,7 +55,7 @@ def prepare_report(process_number, contract, uploads, lookup=None):
             evidence.append(Evidence('E' + str(index), name, digest, [], 'No legible: ' + str(error)))
             warnings.append(name + ': no se pudo extraer texto; requiere revisión manual.')
     if not evidence:
-        raise ValueError('Cargue al menos una evidencia PDF.')
+        warnings.append('No se cargaron evidencias. El informe indicará "Sin evidencia asociada" en las obligaciones.')
     report = Report(process_number, fields, obligations, evidence, warnings)
     if lookup:
         report.contract_source = {
