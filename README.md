@@ -56,4 +56,3 @@ docs/origenes.md
 Los paquetes incluyen `__init__.py`. Las evidencias se procesan en memoria y no se guardan en el repositorio. No suba contratos reales, datos personales ni claves. La configuración del servicio de alojamiento debe revisarse antes de usar información real.
 
 La plantilla fuente se conserva sin cambios, con el nombre solicitado. El generador reemplaza sus datos de ejemplo en una copia y conserva el paquete Word, incluidos encabezados y pies de página.
-
