@@ -20,10 +20,16 @@ Nombre identitario, cargo del supervisor, periodo, fecha de presentación, segur
 
 La columna de avance corresponde al plazo; no debe confundirse con `porc_ejecucion_financiera`. La escala debe confirmarse antes de convertir valores como 1000 a porcentaje.
 
-## Uso provisional
+## Conexión automática a Oracle
+
+El PAR se configura como `ORACLE_PAR_URL` en los Secrets de Streamlit. Nunca se escribe en el repositorio, la interfaz, los mensajes de error ni la trazabilidad. Solo se aceptan enlaces HTTPS del Object Storage de Oracle en Ashburn. La descarga tiene un límite de 50 MB y un tiempo de espera definido.
+
+Cuando Oracle responde con un error HTTP, falla la red, la respuesta está vacía o el archivo no tiene el esquema esperado, la interfaz indica que se debe revisar e ingresar un PAR nuevo en `ORACLE_PAR_URL`. El mensaje muestra el tipo general de problema, sin incluir el enlace firmado.
+
+## Uso
 
 1. Escriba el número del proceso.
-2. Cargue una exportación `.xlsx` o `.csv` y pulse **Consultar proceso**. El Excel debe contener la hoja `tabla_maestra_completa`; el CSV debe usar UTF-8 y coma, punto y coma o tabulación.
+2. Pulse **Consultar proceso** para usar Oracle. Si la conexión no está configurada o falla, cargue una exportación `.xlsx` o `.csv` como respaldo; la carga manual tiene prioridad. El Excel debe contener la hoja `tabla_maestra_completa`; el CSV debe usar UTF-8 y coma, punto y coma o tabulación.
 3. Revise el registro encontrado y sus datos faltantes.
 4. Cargue las evidencias y, si dispone de ella, la minuta para extraer obligaciones. Pulse **Preparar borrador**.
 5. Revise los campos y continúe con la generación del informe.
@@ -32,4 +38,4 @@ Los datos disponibles de la base tienen prioridad sobre la extracción de la min
 
 La trazabilidad incluye archivo, hoja, fila, columna y huella SHA-256. El archivo cargado se procesa en memoria de la sesión y no se publica ni se guarda en GitHub. Límites: 50 MB por archivo, 250 MB descomprimidos para Excel y 200.000 registros.
 
-La conexión automática a Oracle sigue pendiente del restablecimiento del enlace y la validación del esquema real del CSV. No hay credenciales incorporadas al código. El ejemplo suministrado no forma parte del repositorio.
+La conexión reutiliza el mismo lector y mapeo validados con el Excel de ejemplo. El ejemplo suministrado no forma parte del repositorio.

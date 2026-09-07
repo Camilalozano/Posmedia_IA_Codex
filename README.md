@@ -3,10 +3,10 @@
 Base modular en Streamlit para preparar el Formato de informe de ejecución y supervisión de ATENEA.
 El usuario indica el número de proceso, carga evidencias PDF o ZIP con PDF, revisa los datos y descarga un Word diligenciado.
 
-## Estado de la versión 0.2
+## Estado de la versión 0.3
 
 - Funciona la carga de evidencias, lectura de PDF con texto, extracción conservadora de datos y obligaciones IES desde una minuta opcional, revisión manual, asociación de evidencias y generación de Word y trazabilidad JSON.
-- El número del proceso se busca en `referencia_del_contrato (contratos_electronicos)` de una base Excel o CSV cargada por el usuario. La consulta ignora mayúsculas, espacios y guiones; conserva la referencia original y detecta duplicados. **La conexión automática a Oracle y la descarga de la minuta siguen pendientes.**
+- El número del proceso se busca en `referencia_del_contrato (contratos_electronicos)` del CSV de Oracle. La consulta ignora mayúsculas, espacios y guiones; conserva la referencia original y detecta duplicados. La carga manual de Excel o CSV funciona como respaldo. La descarga de la minuta sigue pendiente.
 - La base completa número contractual, contratista, supervisor, fecha de terminación, modificaciones y objeto según el [mapeo acordado](docs/consulta_secop.md). El avance de plazo queda pendiente de confirmar su escala.
 - Las actividades y su relación con las evidencias se ingresan y revisan manualmente. No hay evaluación automática de cumplimiento, OCR, modelos de IA ni firma automática.
 - Sin minuta es posible ingresar manualmente los campos y obligaciones. Sin obligaciones no se genera el Word.
@@ -26,6 +26,14 @@ python -m streamlit run app.py
 Estos comandos son para Windows. En macOS/Linux active el entorno con `source .venv/bin/activate`.
 Para probar: `python -m unittest discover -s tests -v`.
 En Streamlit Community Cloud seleccione este repositorio, la rama `main` y `app.py` como archivo de entrada.
+
+Configure el enlace PAR en los Secrets de la aplicación, sin comitearlo:
+
+```toml
+ORACLE_PAR_URL = "https://objectstorage.../tabla_maestra_completa.csv"
+```
+
+Si el PAR vence o falla la conexión, la aplicación pide reemplazar `ORACLE_PAR_URL` y permite cargar una exportación manual.
 
 ## Organización
 

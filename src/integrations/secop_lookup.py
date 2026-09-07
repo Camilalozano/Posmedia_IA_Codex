@@ -9,8 +9,12 @@ import io
 import re
 import unicodedata
 import zipfile
+import socket
 from dataclasses import dataclass
 from datetime import date, datetime
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 from openpyxl import load_workbook
 from src.config import NOT_FOUND
@@ -30,6 +34,20 @@ FIELD_MAP = {
 MAX_BYTES = 50 * 1024 * 1024
 MAX_EXPANDED_BYTES = 250 * 1024 * 1024
 MAX_ROWS = 200_000
+ORACLE_HOST = 'objectstorage.us-ashburn-1.oraclecloud.com'
+
+
+class OracleConnectionError(RuntimeError):
+    """Error seguro para mostrar sin revelar el PAR configurado."""
+
+
+def oracle_connection_message(detail=''):
+    suffix = f' ({detail})' if detail else ''
+    return (
+        'No fue posible conectar con la base de Oracle' + suffix + '. '
+        'Revisa e ingresa un nuevo PAR en la configuración Secrets de Streamlit, '
+        'con el nombre ORACLE_PAR_URL, y vuelve a intentar.'
+    )
 
 
 @dataclass
@@ -163,3 +181,41 @@ def lookup_file(filename, data, query):
         return None
     row_number, row = found
     return map_record(row, source, row_number, digest)
+
+
+def download_oracle_csv(par_url, timeout=30, opener=urlopen):
+    """Descarga el CSV configurado, con límites y mensajes que no exponen el PAR."""
+    parsed = urlparse(str(par_url).strip())
+    if parsed.scheme != 'https' or parsed.hostname != ORACLE_HOST:
+        raise OracleConnectionError(oracle_connection_message('PAR inválido'))
+    request = Request(str(par_url).strip(), headers={'User-Agent': 'Posmedia-IA-Codex/0.3'})
+    try:
+        with opener(request, timeout=timeout) as response:
+            declared = response.headers.get('Content-Length')
+            if declared:
+                try:
+                    if int(declared) > MAX_BYTES:
+                        raise OracleConnectionError(oracle_connection_message('el archivo supera 50 MB'))
+                except ValueError:
+                    raise OracleConnectionError(oracle_connection_message('respuesta inválida')) from None
+            data = response.read(MAX_BYTES + 1)
+            if len(data) > MAX_BYTES:
+                raise OracleConnectionError(oracle_connection_message('el archivo supera 50 MB'))
+    except OracleConnectionError:
+        raise
+    except HTTPError as error:
+        raise OracleConnectionError(oracle_connection_message('código HTTP ' + str(error.code))) from None
+    except (URLError, TimeoutError, socket.timeout, OSError):
+        raise OracleConnectionError(oracle_connection_message('error de red o tiempo de espera')) from None
+    if not data:
+        raise OracleConnectionError(oracle_connection_message('la respuesta está vacía'))
+    return data
+
+
+def lookup_oracle(par_url, query, opener=urlopen):
+    data = download_oracle_csv(par_url, opener=opener)
+    try:
+        return lookup_file('Oracle Object Storage · tabla_maestra_completa.csv', data, query)
+    except (UnicodeDecodeError, ValueError) as error:
+        # El enlace puede apuntar a un objeto distinto o a una exportación incompatible.
+        raise OracleConnectionError(oracle_connection_message('archivo incompatible: ' + str(error))) from None

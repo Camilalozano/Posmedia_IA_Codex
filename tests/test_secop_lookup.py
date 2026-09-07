@@ -1,10 +1,13 @@
 import csv
 import io
 import unittest
+from email.message import Message
+from urllib.error import HTTPError, URLError
 from openpyxl import Workbook
 from src.config import NOT_FOUND
 from src.integrations.secop_lookup import (
-    ADVANCE, FIELD_MAP, REFERENCE, lookup_file, normalize_reference,
+    ADVANCE, FIELD_MAP, REFERENCE, OracleConnectionError, download_oracle_csv,
+    lookup_file, lookup_oracle, normalize_reference,
 )
 from src.processing.pipeline import prepare_report
 
@@ -30,6 +33,37 @@ def example(reference='ATENEA-582-2025'):
 
 
 class LookupTests(unittest.TestCase):
+    def test_oracle_download_and_lookup(self):
+        data = csv_fixture([example()])
+        class Response:
+            headers = {'Content-Length': str(len(data))}
+            def __enter__(self): return self
+            def __exit__(self, *args): pass
+            def read(self, size): return data[:size]
+        result = lookup_oracle(
+            'https://objectstorage.us-ashburn-1.oraclecloud.com/p/secret/object.csv',
+            'Atenea 582 2025', opener=lambda request, timeout: Response())
+        self.assertEqual(result.reference, 'ATENEA-582-2025')
+        self.assertNotIn('secret', result.source)
+
+    def test_oracle_errors_request_new_par_without_leaking_url(self):
+        url = 'https://objectstorage.us-ashburn-1.oraclecloud.com/p/very-secret/object.csv'
+        cases = [
+            lambda request, timeout: (_ for _ in ()).throw(HTTPError(url, 404, 'Not found', Message(), None)),
+            lambda request, timeout: (_ for _ in ()).throw(URLError('offline')),
+        ]
+        for opener in cases:
+            with self.subTest(opener=opener), self.assertRaises(OracleConnectionError) as raised:
+                download_oracle_csv(url, opener=opener)
+            message = str(raised.exception)
+            self.assertIn('nuevo PAR', message)
+            self.assertIn('ORACLE_PAR_URL', message)
+            self.assertNotIn('very-secret', message)
+
+    def test_oracle_rejects_wrong_destination(self):
+        with self.assertRaisesRegex(OracleConnectionError, 'PAR inválido'):
+            download_oracle_csv('https://example.com/file.csv')
+
     def test_xlsx_reader_and_empty_other_sheet(self):
         workbook = Workbook()
         sheet = workbook.active

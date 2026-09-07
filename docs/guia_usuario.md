@@ -1,7 +1,7 @@
 # Guía de usuario
 
 1. Indique el número del proceso. Puede escribir `Atenea 582 2025`, con o sin guiones y en cualquier combinación de mayúsculas y minúsculas. Se busca en la referencia contractual de la base.
-2. Cargue la base Excel o CSV y pulse **Consultar proceso**. Revise los datos encontrados. Opcionalmente cargue la minuta PDF para extraer obligaciones IES. La conexión automática a Oracle sigue pendiente; consulte [el mapeo y los requisitos del archivo](consulta_secop.md).
+2. Pulse **Consultar proceso** para buscar en Oracle. Si falla la conexión, solicite al administrador actualizar `ORACLE_PAR_URL` en los Secrets de Streamlit o cargue una base Excel/CSV como respaldo. Revise los datos encontrados. Opcionalmente cargue la minuta PDF para extraer obligaciones IES. Consulte [el mapeo y los requisitos de conexión](consulta_secop.md).
 3. Cargue las evidencias PDF, individualmente o dentro de un ZIP. Límite: 50 PDF, 20 MB por PDF y 100 MB descomprimidos en total. No se admiten ZIP cifrados, ZIP anidados ni otros formatos.
 4. Pulse Preparar borrador. Revise el inventario y los mensajes de lectura. Un PDF escaneado requiere OCR externo o revisión manual.
 5. Corrija los campos, incluido el número contractual; complete el periodo y demás datos de ejecución. Revise y complete las obligaciones, una por línea.

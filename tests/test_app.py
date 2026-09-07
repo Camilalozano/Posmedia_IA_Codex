@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from streamlit.testing.v1 import AppTest
 from tests.test_secop_lookup import csv_fixture, example
@@ -41,3 +42,14 @@ class AppTests(unittest.TestCase):
         app.file_uploader(key='secop_base').clear().run()
         self.assertEqual(len(app.text_area), 0)
         self.assertEqual(len(app.success), 0)
+
+    def test_connection_error_tells_admin_to_replace_par(self):
+        with patch.dict('os.environ', {}, clear=False):
+            app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20)
+            app.secrets['ORACLE_PAR_URL'] = 'https://objectstorage.us-ashburn-1.oraclecloud.com/p/expired/file.csv'
+            app.run()
+            app.text_input[0].set_value('ATENEA-582-2025')
+            with patch('src.integrations.secop_ui.lookup_oracle', side_effect=RuntimeError(
+                    'No fue posible conectar con la base de Oracle. Revisa e ingresa un nuevo PAR en la configuración Secrets de Streamlit, con el nombre ORACLE_PAR_URL, y vuelve a intentar.')):
+                app.button(key='consultar_secop').click().run()
+            self.assertTrue(any('nuevo PAR' in item.value and 'ORACLE_PAR_URL' in item.value for item in app.error))
