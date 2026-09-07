@@ -1,7 +1,7 @@
 # Desarrollo paso a paso
 
-1. Validar los campos del formato, el flujo de app.py y la distinción entre número de proceso y número contractual.
-2. Conectar una fuente verificada de SECOP para consultar por número de proceso y recuperar el expediente, conservando trazabilidad y manejo de coincidencias ambiguas.
+1. Implementado: consulta por referencia contractual, normalización de espacios/guiones/mayúsculas y mapeo inicial del formato. Pendiente: confirmar escala del avance de plazo y reglas de campos inferidos.
+2. Restablecer la conexión a Oracle y verificar que el CSV remoto use el esquema del Excel de ejemplo. Integrarlo a la consulta existente y posteriormente recuperar el expediente.
 3. Mejorar obligations.py con ejemplos anonimizados de distintos convenios, saltos de página y numeraciones.
 4. Definir evidencia mínima por obligación, periodo aplicable y localización de soportes.
 5. Incorporar propuestas automáticas de actividades y asociaciones respaldadas por fragmentos y páginas, con revisión humana.

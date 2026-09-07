@@ -7,17 +7,20 @@ from src.models import Field
 from src.processing.pipeline import prepare_report
 from src.generation.word_report import build_docx, MAPPING
 from src.generation.audit import audit_json
+from src.integrations.secop_ui import lookup_panel
 
 def main():
     st.set_page_config(page_title='Posmedia IA Codex', page_icon='📄', layout='wide')
     st.title('Informe de ejecución y supervisión')
-    st.caption('Posmedia · ATENEA · Versión inicial 0.1')
-    process = st.text_input('Número de proceso', placeholder='Indique el número de proceso')
-    st.info('En esta versión el número identifica el trámite. La consulta automática a SECOP está pendiente; cargue la minuta para extraer datos y obligaciones.')
-    contract = st.file_uploader('Minuta o convenio (opcional)', type=['pdf'])
-    uploads = st.file_uploader('Evidencias del periodo', type=['pdf', 'zip'], accept_multiple_files=True)
+    st.caption('Posmedia · ATENEA · Consulta de base contractual')
+    process = st.text_input('Número del proceso', placeholder='ATENEA-582-2025')
+    lookup, lookup_token = lookup_panel(process)
+    contract = st.file_uploader('Minuta o convenio (opcional)', type=['pdf'], key='minuta')
+    uploads = st.file_uploader('Evidencias del periodo', type=['pdf', 'zip'], accept_multiple_files=True, key='evidencias')
     signature = hashlib.sha256()
     signature.update(process.encode())
+    signature.update(lookup_token.encode())
+    signature.update(repr(lookup).encode())
     for upload in ([contract] if contract else []) + list(uploads or []):
         signature.update(upload.name.encode())
         signature.update(upload.getvalue())
@@ -28,7 +31,7 @@ def main():
     if st.button('Preparar borrador', type='primary'):
         try:
             report = prepare_report(process, (contract.name, contract.getvalue()) if contract else None,
-                                    [(f.name, f.getvalue()) for f in uploads or []])
+                                    [(f.name, f.getvalue()) for f in uploads or []], lookup=lookup)
             st.session_state['report'] = report
             st.session_state['fingerprint'] = fingerprint
             st.session_state.pop('output', None)
@@ -47,7 +50,7 @@ def main():
             for page_number, page in enumerate(evidence.pages, 1):
                 st.text('Página ' + str(page_number) + '\n' + page)
     st.subheader('Revisar datos del informe')
-    st.caption('El número de proceso puede ser distinto del número del contrato o convenio. Revise ambos.')
+    st.caption('El número del proceso se busca en la referencia contractual. Revise los datos antes de generar el informe.')
     for key in MAPPING.values():
         original = report.fields.get(key, Field())
         value = st.text_area(key.replace('_', ' ').capitalize(), value=original.value,

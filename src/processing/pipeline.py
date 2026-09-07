@@ -1,12 +1,14 @@
-"""Orquesta la versión inicial; no realiza consultas automáticas a SECOP."""
+"""Combina la consulta contractual, la minuta y las evidencias del periodo."""
 import hashlib
 from src.models import Field, Evidence, Report
 from src.extraction.pdf_reader import pdf_text
 from src.extraction.contract_fields import extract_contract
 from src.extraction.obligations import extract_obligations
 from src.processing.batch import expand_inputs
+from src.integrations.secop_lookup import normalize_reference
+from src.config import NOT_FOUND
 
-def prepare_report(process_number, contract, uploads):
+def prepare_report(process_number, contract, uploads, lookup=None):
     process_number = process_number.strip()
     if not process_number:
         raise ValueError('Indique el número de proceso.')
@@ -24,7 +26,23 @@ def prepare_report(process_number, contract, uploads):
             obligations.append(Field(str(item['numero_obligacion']) + '. ' + body,
                                      name + ' · sección obligaciones IES', 'medio'))
     else:
-        warnings.append('Sin minuta: complete los datos y las obligaciones manualmente. La consulta por número de proceso aún no está integrada.')
+        warnings.append('Sin minuta: complete las obligaciones manualmente. Los campos contractuales pueden provenir de la base consultada.')
+    if lookup:
+        if normalize_reference(process_number) != normalize_reference(lookup.reference):
+            raise ValueError('La consulta pertenece a otro proceso. Consulte de nuevo.')
+        extracted = fields['numero_contrato_convenio'].value
+        if contract and extracted != NOT_FOUND and normalize_reference(extracted) != normalize_reference(lookup.reference):
+            raise ValueError('El número contractual extraído de la minuta difiere del contrato consultado. Revise la minuta antes de continuar.')
+        if contract and extracted == NOT_FOUND:
+            warnings.append('No se pudo comprobar el número de la minuta. Verifique que sus obligaciones correspondan al contrato consultado.')
+        for key, value in lookup.fields.items():
+            previous = fields.get(key)
+            if value.value == NOT_FOUND:
+                continue
+            if previous and previous.value != NOT_FOUND and previous.value != value.value:
+                warnings.append(f'{key.replace("_", " ")}: la base y la extracción de la minuta difieren. Se usó la base consultada; revise el dato.')
+            fields[key] = value
+        warnings.extend(lookup.warnings)
     if not obligations:
         warnings.append('No se extrajeron obligaciones IES. Agréguelas antes de generar el informe.')
     evidence = []
@@ -38,4 +56,11 @@ def prepare_report(process_number, contract, uploads):
             warnings.append(name + ': no se pudo extraer texto; requiere revisión manual.')
     if not evidence:
         raise ValueError('Cargue al menos una evidencia PDF.')
-    return Report(process_number, fields, obligations, evidence, warnings)
+    report = Report(process_number, fields, obligations, evidence, warnings)
+    if lookup:
+        report.contract_source = {
+            'source': lookup.source, 'sha256': lookup.sha256,
+            'row': lookup.row_number, 'reference': lookup.reference,
+            'raw_advance': lookup.raw_advance, 'advance_scale': 'pendiente',
+        }
+    return report

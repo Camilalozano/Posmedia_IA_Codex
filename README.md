@@ -3,10 +3,11 @@
 Base modular en Streamlit para preparar el Formato de informe de ejecución y supervisión de ATENEA.
 El usuario indica el número de proceso, carga evidencias PDF o ZIP con PDF, revisa los datos y descarga un Word diligenciado.
 
-## Estado de la versión 0.1
+## Estado de la versión 0.2
 
 - Funciona la carga de evidencias, lectura de PDF con texto, extracción conservadora de datos y obligaciones IES desde una minuta opcional, revisión manual, asociación de evidencias y generación de Word y trazabilidad JSON.
-- El número de proceso identifica la sesión y la descarga. **Todavía no consulta SECOP ni descarga la minuta automáticamente.** No se copia ese número al campo contractual: pueden ser identificadores diferentes.
+- El número del proceso se busca en `referencia_del_contrato (contratos_electronicos)` de una base Excel o CSV cargada por el usuario. La consulta ignora mayúsculas, espacios y guiones; conserva la referencia original y detecta duplicados. **La conexión automática a Oracle y la descarga de la minuta siguen pendientes.**
+- La base completa número contractual, contratista, supervisor, fecha de terminación, modificaciones y objeto según el [mapeo acordado](docs/consulta_secop.md). El avance de plazo queda pendiente de confirmar su escala.
 - Las actividades y su relación con las evidencias se ingresan y revisan manualmente. No hay evaluación automática de cumplimiento, OCR, modelos de IA ni firma automática.
 - Sin minuta es posible ingresar manualmente los campos y obligaciones. Sin obligaciones no se genera el Word.
 - Los datos no localizados quedan indicados como pendientes. Los campos de decisión del supervisor quedan vacíos.
@@ -35,6 +36,8 @@ requirements.txt
 templates/Plantilla_maestra_informe_supervision_ATENEA_posmedia.docx
 src/config.py
 src/models.py
+src/integrations/secop_lookup.py
+src/integrations/secop_ui.py
 src/extraction/pdf_reader.py
 src/extraction/contract_fields.py
 src/extraction/obligations.py
@@ -46,11 +49,15 @@ tests/test_contract_fields.py
 tests/test_obligations.py
 tests/test_word_report.py
 tests/test_pipeline.py
+tests/test_secop_lookup.py
+tests/test_app.py
 tests/fixtures/
 docs/guia_usuario.md
 docs/reglas_extraccion.md
 docs/hoja_de_ruta.md
 docs/origenes.md
+docs/consulta_secop.md
+docs/validacion.md
 ```
 
 Los paquetes incluyen `__init__.py`. Las evidencias se procesan en memoria y no se guardan en el repositorio. No suba contratos reales, datos personales ni claves. La configuración del servicio de alojamiento debe revisarse antes de usar información real.

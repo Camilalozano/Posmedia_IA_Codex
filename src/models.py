@@ -24,3 +24,4 @@ class Report:
     warnings: list[str] = field(default_factory=list)
     activities: dict[int, str] = field(default_factory=dict)
     links: dict[int, list[str]] = field(default_factory=dict)
+    contract_source: dict = field(default_factory=dict)
