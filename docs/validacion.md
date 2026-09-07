@@ -12,7 +12,9 @@ Se aprobaron 19 pruebas con openpyxl 3.1.5 añadido al entorno. La consulta veri
 
 Se aprobaron 23 pruebas en total. Las pruebas nuevas cubren la descarga remota, dominio permitido, errores HTTP y de red, renovación del PAR sin revelarlo y mensaje de la interfaz. El PAR suministrado respondió HTTP 200 y la consulta real de `Atenea 582 2025` recuperó `ATENEA-582-2025`, Universidad EAN y fecha de terminación 31/12/2032. El valor crudo de avance en esa exportación fue `8,3`; su conversión sigue pendiente de definición funcional.
 
-La prueba local del lector sobre el Excel suministrado confirmó que tres variantes (mayúsculas con guiones, palabras separadas por espacios y minúsculas sin separadores) recuperan el mismo registro, conservan la referencia original y formatean la fecha correctamente. No se incorporó el Excel ni sus registros al repositorio. La escala del avance de plazo y la conexión Oracle siguen pendientes. Estas verificaciones no sustituyen la revisión visual del Word.
+La prueba local del lector sobre el Excel suministrado confirmó que tres variantes (mayúsculas con guiones, palabras separadas por espacios y minúsculas sin separadores) recuperan el mismo registro, conservan la referencia original y formatean la fecha correctamente. No se incorporó el Excel ni sus registros al repositorio. Estas verificaciones no sustituyen la revisión visual del Word.
+
+El porcentaje de avance ahora toma `porc_ejecucion_financiera`. En la exportación de Oracle consultada, `ATENEA-582-2025` devuelve `6,0`; la aplicación copia ese valor sin transformar su escala y permite revisarlo antes de generar el informe.
 
 ## Base de la versión 0.1
 

@@ -21,7 +21,7 @@ from src.config import NOT_FOUND
 from src.models import Field
 
 REFERENCE = 'referencia_del_contrato (contratos_electronicos)'
-ADVANCE = 'porc_avanceplazo_inferido'
+ADVANCE = 'porc_ejecucion_financiera'
 SHEET = 'tabla_maestra_completa'
 FIELD_MAP = {
     'numero_contrato_convenio': REFERENCE,
@@ -129,12 +129,12 @@ def map_record(row, source, row_number, digest):
                 warnings.append('Revise el formato de la fecha de terminación; se conservó el valor original.')
         fields[target] = Field(value, provenance, 'dato de base; por verificar')
     raw_advance = cell_text(row.get(ADVANCE))
-    fields['porcentaje_avance'] = Field(
-        NOT_FOUND, f'{source} · fila {row_number} · {ADVANCE} · escala pendiente', 'bajo')
+    provenance = f'{source} · fila {row_number} · {ADVANCE}'
     if raw_advance:
-        warnings.append(f'Avance de plazo: la base registra {raw_advance}. Falta confirmar la escala para convertirlo a porcentaje.')
+        fields['porcentaje_avance'] = Field(raw_advance, provenance, 'dato de base; por verificar')
     else:
-        warnings.append('La base no informa el avance de plazo.')
+        fields['porcentaje_avance'] = Field(NOT_FOUND, provenance + ' · sin dato', 'bajo')
+        warnings.append('La base no informa el porcentaje de ejecución financiera.')
     return LookupResult(reference, fields, warnings, source, row_number, digest, raw_advance)
 
 

@@ -7,7 +7,7 @@ El usuario indica el número de proceso, puede cargar evidencias PDF o ZIP con P
 
 - La carga de evidencias es opcional. Cuando se aportan archivos, funciona su lectura, revisión y asociación con las obligaciones. Sin archivos, el Word indica `Sin evidencia asociada`.
 - El número del proceso se busca en `referencia_del_contrato (contratos_electronicos)` del CSV de Oracle. La consulta ignora mayúsculas, espacios y guiones; conserva la referencia original y detecta duplicados. La carga manual de Excel o CSV funciona como respaldo. La descarga de la minuta sigue pendiente.
-- La base completa número contractual, contratista, supervisor, fecha de terminación, modificaciones y objeto según el [mapeo acordado](docs/consulta_secop.md). El avance de plazo queda pendiente de confirmar su escala.
+- La base completa número contractual, contratista, supervisor, fecha de terminación, modificaciones, porcentaje de ejecución financiera y objeto según el [mapeo acordado](docs/consulta_secop.md). El porcentaje conserva el valor original de SECOP.
 - Las actividades y su relación con las evidencias se ingresan y revisan manualmente. No hay evaluación automática de cumplimiento, OCR, modelos de IA ni firma automática.
 - Sin minuta es posible ingresar manualmente los campos y obligaciones. Sin obligaciones no se genera el Word.
 - Los datos no localizados quedan indicados como pendientes. Los campos de decisión del supervisor quedan vacíos.

@@ -101,16 +101,24 @@ class LookupTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'varios registros'):
             lookup_file('base.csv', csv_fixture([example(), example('Atenea 582 2025')]), 'atenea5822025')
 
-    def test_unknown_scale_and_missing_values_not_invented(self):
+    def test_financial_execution_is_copied_and_missing_values_are_not_invented(self):
         row = example()
         row[FIELD_MAP['nombre_supervisor']] = ''
         row[FIELD_MAP['modificaciones']] = ''
         result = lookup_file('base.csv', csv_fixture([row]), 'ATENEA5822025')
-        self.assertEqual(result.fields['porcentaje_avance'].value, NOT_FOUND)
+        self.assertEqual(result.fields['porcentaje_avance'].value, '1000')
         self.assertEqual(result.raw_advance, '1000')
+        self.assertIn(ADVANCE, result.fields['porcentaje_avance'].source)
         self.assertEqual(result.fields['modificaciones'].value, NOT_FOUND)
         self.assertNotIn('cargo_supervisor', result.fields)
         self.assertTrue(result.warnings)
+
+    def test_missing_financial_execution_is_reported(self):
+        row = example()
+        row[ADVANCE] = ''
+        result = lookup_file('base.csv', csv_fixture([row]), 'ATENEA5822025')
+        self.assertEqual(result.fields['porcentaje_avance'].value, NOT_FOUND)
+        self.assertTrue(any('ejecución financiera' in warning for warning in result.warnings))
 
     def test_report_uses_mapping_and_keeps_provenance(self):
         result = lookup_file('base.csv', csv_fixture([example()]), 'atenea5822025')

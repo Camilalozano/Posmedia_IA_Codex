@@ -61,6 +61,6 @@ def prepare_report(process_number, contract, uploads, lookup=None):
         report.contract_source = {
             'source': lookup.source, 'sha256': lookup.sha256,
             'row': lookup.row_number, 'reference': lookup.reference,
-            'raw_advance': lookup.raw_advance, 'advance_scale': 'pendiente',
+            'raw_advance': lookup.raw_advance, 'advance_scale': 'valor original; sin transformación',
         }
     return report

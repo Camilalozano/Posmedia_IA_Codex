@@ -14,11 +14,11 @@ Se ignoran mayúsculas/minúsculas, espacios y guiones comunes, incluidos guione
 | Fecha de terminación | `fecha_de_fin_del_contrato (contratos_electronicos)` | Fecha ISO a día/mes/año |
 | Modificaciones | `tipo_modificacion` | Copiar el tipo disponible; no constituye un historial completo |
 | Objeto | `descripcion_del_proceso (contratos_electronicos)` | Copiar íntegro |
-| Porcentaje de avance | `porc_avanceplazo_inferido` | Mapeado, pendiente de confirmar escala; se muestra el valor original y el campo permanece revisable |
+| Porcentaje de avance | `porc_ejecucion_financiera` | Copiar el valor original, sin transformar su escala; el campo permanece revisable |
 
 Nombre identitario, cargo del supervisor, periodo, fecha de presentación, seguridad social y fecha de publicación en SECOP no se infieren todavía. Se completan manualmente o mediante módulos posteriores. Un valor vacío en modificaciones no significa que no existan modificaciones.
 
-La columna de avance corresponde al plazo; no debe confundirse con `porc_ejecucion_financiera`. La escala debe confirmarse antes de convertir valores como 1000 a porcentaje.
+El porcentaje de avance se toma de la ejecución financiera. La aplicación conserva el valor original de SECOP, incluida su separación decimal, y no lo multiplica ni le agrega el símbolo `%`.
 
 ## Conexión automática a Oracle
 
