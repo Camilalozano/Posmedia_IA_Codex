@@ -51,7 +51,8 @@ def prepare_report(process_number, contract, uploads, lookup=None):
             previous = fields.get(key)
             if value.value == NOT_FOUND:
                 continue
-            if previous and previous.value != NOT_FOUND and previous.value != value.value:
+            was_extracted = previous and ' · Página ' in previous.source
+            if was_extracted and previous.value != NOT_FOUND and previous.value != value.value:
                 warnings.append(f'{key.replace("_", " ")}: la base y la extracción de la minuta difieren. Se usó la base consultada; revise el dato.')
             fields[key] = value
         warnings.extend(lookup.warnings)
@@ -69,10 +70,16 @@ def prepare_report(process_number, contract, uploads, lookup=None):
     if not evidence:
         warnings.append('No se cargaron evidencias. El informe indicará "Sin evidencia asociada" en las obligaciones.')
     report = Report(process_number, fields, obligations, evidence, warnings)
+    if contract:
+        report.contract_source['minute'] = {
+            'name': contract[0],
+            'sha256': hashlib.sha256(contract[1]).hexdigest(),
+            'origin': 'SECOP automático o carga manual, según la selección mostrada en la interfaz',
+        }
     if lookup:
-        report.contract_source = {
+        report.contract_source.update({
             'source': lookup.source, 'sha256': lookup.sha256,
             'row': lookup.row_number, 'reference': lookup.reference,
             'raw_advance': lookup.raw_advance, 'advance_scale': 'valor original; sin transformación',
-        }
+        })
     return report
