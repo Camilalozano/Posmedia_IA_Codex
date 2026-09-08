@@ -4,6 +4,7 @@ import streamlit as st
 from src.config import NOT_FOUND
 from src.integrations.secop_documents import notice_uid, prepare_secop_documents, SecopDocumentError
 from src.integrations.secop_lookup import lookup_file, lookup_oracle, normalize_reference
+from src.processing.pipeline import extract_minute
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -11,6 +12,11 @@ def cached_secop_documents(process_url, contract_id, reference, provider_documen
     return prepare_secop_documents(
         process_url, contract_id, reference, provider_document, provider_name,
     )
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def cached_minute_extraction(name, data):
+    return extract_minute(name, data)
 
 
 def configured_par():
@@ -37,11 +43,15 @@ def lookup_panel(process):
             st.session_state.pop('secop_result', None)
             st.session_state.pop('secop_documents', None)
             st.session_state.pop('secop_documents_error', None)
+            st.session_state.pop('secop_minute_extraction', None)
+            st.session_state.pop('secop_minute_extraction_error', None)
             st.session_state['secop_token'] = token
         if st.button('Consultar proceso', key='consultar_secop'):
             st.session_state.pop('secop_result', None)
             st.session_state.pop('secop_documents', None)
             st.session_state.pop('secop_documents_error', None)
+            st.session_state.pop('secop_minute_extraction', None)
+            st.session_state.pop('secop_minute_extraction_error', None)
             try:
                 with st.spinner('Buscando la referencia contractual…'):
                     if upload:
@@ -65,6 +75,14 @@ def lookup_panel(process):
                                     result.provider_document, provider_name,
                                 )
                             st.session_state['secop_documents'] = documents
+                            if documents.minute_pdf:
+                                try:
+                                    with st.spinner('Extrayendo información de la minuta…'):
+                                        st.session_state['secop_minute_extraction'] = cached_minute_extraction(
+                                            documents.minute_name, documents.minute_pdf,
+                                        )
+                                except ValueError as error:
+                                    st.session_state['secop_minute_extraction_error'] = str(error)
                         except SecopDocumentError as error:
                             st.session_state['secop_documents_error'] = str(error)
             except Exception as error:
@@ -105,11 +123,45 @@ def lookup_panel(process):
                     )
                 for warning in documents.warnings:
                     st.warning(warning)
+                extraction = st.session_state.get('secop_minute_extraction')
+                if extraction:
+                    fields, obligations = extraction
+                    extracted_rows = [
+                        {
+                            'Dato extraído': key.replace('_', ' ').capitalize(),
+                            'Valor': field.value,
+                            'Fuente': field.source,
+                            'Confianza': field.confidence,
+                        }
+                        for key, field in fields.items()
+                        if field.value != NOT_FOUND and field.source.startswith(documents.minute_name + ' · Página')
+                    ]
+                    st.markdown('**Información extraída de la minuta**')
+                    if extracted_rows:
+                        st.dataframe(extracted_rows, hide_index=True)
+                    if obligations:
+                        st.markdown('**Obligaciones específicas extraídas**')
+                        st.dataframe([
+                            {
+                                'Número': index,
+                                'Obligación específica': obligation.value.split('. ', 1)[-1],
+                                'Fuente': obligation.source,
+                            }
+                            for index, obligation in enumerate(obligations, 1)
+                        ], hide_index=True)
+                        st.caption(
+                            f'Se extrajeron {len(obligations)} obligaciones. Se incorporarán al borrador '
+                            'cuando pulse “Preparar borrador”.'
+                        )
+                    else:
+                        st.warning('La minuta fue leída, pero no se identificaron obligaciones específicas de la IES.')
+                extraction_error = st.session_state.get('secop_minute_extraction_error')
+                if extraction_error:
+                    st.warning('La minuta se descargó, pero no fue posible extraer su texto: ' + extraction_error)
             document_error = st.session_state.get('secop_documents_error')
             if document_error:
                 st.warning(document_error)
             for warning in result.warnings:
                 st.warning(warning)
     # El token también invalida borradores al cambiar la base, aunque no se consulte.
-    return result, repr(token)
-
+    return result, repr(token), st.session_state.get('secop_documents')

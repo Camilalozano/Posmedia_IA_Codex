@@ -8,6 +8,26 @@ from src.processing.batch import expand_inputs
 from src.integrations.secop_lookup import normalize_reference
 from src.config import NOT_FOUND
 
+
+def extract_minute(name, data):
+    """Extrae campos y obligaciones de una minuta, conservando su procedencia."""
+    text, pages = pdf_text(data)
+    fields = extract_contract(pages)
+    for value in fields.values():
+        if value.source.startswith('Página'):
+            value.source = name + ' · ' + value.source
+    obligations = []
+    for item in extract_obligations(text, pages):
+        body = item['obligaciones_especificas']
+        location = f"página {item['pagina']}" if item.get('pagina') else 'sección compromisos específicos de la IES'
+        obligations.append(Field(
+            str(item['numero_obligacion']) + '. ' + body,
+            name + ' · ' + location,
+            'alto' if item.get('pagina') else 'medio',
+        ))
+    return fields, obligations
+
+
 def prepare_report(process_number, contract, uploads, lookup=None):
     process_number = process_number.strip()
     if not process_number:
@@ -16,16 +36,7 @@ def prepare_report(process_number, contract, uploads, lookup=None):
     obligations, warnings = [], []
     if contract:
         name, data = contract
-        text, pages = pdf_text(data)
-        fields = extract_contract(pages)
-        for value in fields.values():
-            if value.source.startswith('Página'):
-                value.source = name + ' · ' + value.source
-        for item in extract_obligations(text, pages):
-            body = item['obligaciones_especificas']
-            location = f"página {item['pagina']}" if item.get('pagina') else 'sección compromisos específicos de la IES'
-            obligations.append(Field(str(item['numero_obligacion']) + '. ' + body,
-                                     name + ' · ' + location, 'alto' if item.get('pagina') else 'medio'))
+        fields, obligations = extract_minute(name, data)
     else:
         warnings.append('Sin minuta: complete las obligaciones manualmente. Los campos contractuales pueden provenir de la base consultada.')
     if lookup:
@@ -65,4 +76,3 @@ def prepare_report(process_number, contract, uploads, lookup=None):
             'raw_advance': lookup.raw_advance, 'advance_scale': 'valor original; sin transformación',
         }
     return report
-

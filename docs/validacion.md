@@ -1,12 +1,14 @@
 # Validación inicial
 
-## Descarga y extracción SECOP de la versión 0.4
+## Descarga y extracción SECOP de la versión 0.5
 
 Se validó el flujo completo con `ATENEA-582-2025`: la API oficial de archivos devolvió la minuta `ATENEA-582-2025 EAN.pdf` (373.436 bytes), la minuta permitió identificar el proceso `ATENEA-IA-JE-003-2025` y la API oficial de procesos devolvió la fila adjudicada a Universidad EAN. La ficha PDF generada fue abierta, renderizada y revisada visualmente.
 
 La minuta real tiene 25 páginas. El extractor recuperó 22 compromisos específicos de la IES, con sus páginas 14 a 16, y obtuvo número contractual, tipo de instrumento, contratista, NIT, representante legal e identificación, cargo del supervisor, fecha de terminación, plazo, lugar, valor total, aportes y objeto. Estos resultados siguen sujetos a revisión humana.
 
 Las pruebas automatizadas cubren validación del enlace SECOP, selección de la minuta, cabeceras necesarias para la descarga pública, identificación del proceso, selección por NIT del proveedor, generación del PDF y presencia de los dos botones de descarga en Streamlit.
+
+La prueba de interfaz confirma que la minuta descargada muestra sus campos y obligaciones en tablas y alimenta `Revisar datos del informe` al preparar el borrador sin una carga manual. Se aprobaron 37 pruebas en total.
 
 ## Evidencias opcionales
 
@@ -33,4 +35,3 @@ Cobertura: número contractual y fuente, datos ausentes, sección IES y límite 
 Resultado: 11 pruebas aprobadas. Solo se usó un convenio ficticio; esto no acredita precisión general en minutas reales.
 
 La revisión visual del Word sigue pendiente: se intentó renderizar un informe de prueba, pero LibreOffice no está instalado en el entorno. Las pruebas estructurales del archivo pasan; debe verificarse paginación y formato en Word antes de uso operativo.
-

@@ -28,14 +28,22 @@ def main():
     st.title('Informe de ejecución y supervisión')
     st.caption('Posmedia · ATENEA · Consulta de base contractual')
     process = st.text_input('Número del proceso', placeholder='ATENEA-582-2025')
-    lookup, lookup_token = lookup_panel(process)
+    lookup, lookup_token, secop_documents = lookup_panel(process)
     contract = st.file_uploader('Minuta o convenio (opcional)', type=['pdf'], key='minuta')
+    automatic_contract = None
+    if not contract and secop_documents and secop_documents.minute_pdf:
+        automatic_contract = (secop_documents.minute_name, secop_documents.minute_pdf)
+        st.caption('Se usará automáticamente la minuta descargada de SECOP para preparar el borrador.')
+    selected_contract = (contract.name, contract.getvalue()) if contract else automatic_contract
     uploads = st.file_uploader('Evidencias del periodo (opcional)', type=['pdf', 'zip'], accept_multiple_files=True, key='evidencias')
     signature = hashlib.sha256()
     signature.update(process.encode())
     signature.update(lookup_token.encode())
     signature.update(repr(lookup).encode())
-    for upload in ([contract] if contract else []) + list(uploads or []):
+    if selected_contract:
+        signature.update(selected_contract[0].encode())
+        signature.update(selected_contract[1])
+    for upload in list(uploads or []):
         signature.update(upload.name.encode())
         signature.update(upload.getvalue())
     fingerprint = signature.hexdigest()
@@ -44,7 +52,7 @@ def main():
         st.session_state.pop('output', None)
     if st.button('Preparar borrador', type='primary'):
         try:
-            report = prepare_report(process, (contract.name, contract.getvalue()) if contract else None,
+            report = prepare_report(process, selected_contract,
                                     [(f.name, f.getvalue()) for f in uploads or []], lookup=lookup)
             st.session_state['report'] = report
             st.session_state['fingerprint'] = fingerprint
@@ -119,4 +127,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
