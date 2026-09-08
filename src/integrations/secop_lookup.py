@@ -22,6 +22,9 @@ from src.models import Field
 
 REFERENCE = 'referencia_del_contrato (contratos_electronicos)'
 ADVANCE = 'porc_ejecucion_financiera'
+PROCESS_URL = 'urlproceso (contratos_electronicos)'
+CONTRACT_ID = 'id_contrato'
+PROVIDER_DOCUMENT = 'documento_proveedor (contratos_electronicos)'
 SHEET = 'tabla_maestra_completa'
 FIELD_MAP = {
     'numero_contrato_convenio': REFERENCE,
@@ -59,6 +62,9 @@ class LookupResult:
     row_number: int
     sha256: str
     raw_advance: str = ''
+    process_url: str = ''
+    contract_id: str = ''
+    provider_document: str = ''
 
 
 def normalize_reference(value):
@@ -135,7 +141,11 @@ def map_record(row, source, row_number, digest):
     else:
         fields['porcentaje_avance'] = Field(NOT_FOUND, provenance + ' · sin dato', 'bajo')
         warnings.append('La base no informa el porcentaje de ejecución financiera.')
-    return LookupResult(reference, fields, warnings, source, row_number, digest, raw_advance)
+    return LookupResult(
+        reference, fields, warnings, source, row_number, digest, raw_advance,
+        cell_text(row.get(PROCESS_URL)), cell_text(row.get(CONTRACT_ID)),
+        cell_text(row.get(PROVIDER_DOCUMENT)),
+    )
 
 
 def lookup_file(filename, data, query):
@@ -219,3 +229,4 @@ def lookup_oracle(par_url, query, opener=urlopen):
     except (UnicodeDecodeError, ValueError) as error:
         # El enlace puede apuntar a un objeto distinto o a una exportación incompatible.
         raise OracleConnectionError(oracle_connection_message('archivo incompatible: ' + str(error))) from None
+

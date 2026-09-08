@@ -21,10 +21,11 @@ def prepare_report(process_number, contract, uploads, lookup=None):
         for value in fields.values():
             if value.source.startswith('Página'):
                 value.source = name + ' · ' + value.source
-        for item in extract_obligations(text):
+        for item in extract_obligations(text, pages):
             body = item['obligaciones_especificas']
+            location = f"página {item['pagina']}" if item.get('pagina') else 'sección compromisos específicos de la IES'
             obligations.append(Field(str(item['numero_obligacion']) + '. ' + body,
-                                     name + ' · sección obligaciones IES', 'medio'))
+                                     name + ' · ' + location, 'alto' if item.get('pagina') else 'medio'))
     else:
         warnings.append('Sin minuta: complete las obligaciones manualmente. Los campos contractuales pueden provenir de la base consultada.')
     if lookup:
@@ -64,3 +65,4 @@ def prepare_report(process_number, contract, uploads, lookup=None):
             'raw_advance': lookup.raw_advance, 'advance_scale': 'valor original; sin transformación',
         }
     return report
+

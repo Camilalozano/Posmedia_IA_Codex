@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 from pathlib import Path
 from streamlit.testing.v1 import AppTest
+from src.integrations.secop_documents import SecopDocuments
 from tests.test_secop_lookup import csv_fixture, example
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,3 +67,23 @@ class AppTests(unittest.TestCase):
                     'No fue posible conectar con la base de Oracle. Revisa e ingresa un nuevo PAR en la configuración Secrets de Streamlit, con el nombre ORACLE_PAR_URL, y vuelve a intentar.')):
                 app.button(key='consultar_secop').click().run()
             self.assertTrue(any('nuevo PAR' in item.value and 'ORACLE_PAR_URL' in item.value for item in app.error))
+
+    def test_lookup_exposes_process_link_and_two_pdfs(self):
+        documents = SecopDocuments(
+            minute_name='ATENEA-582-2025 EAN.pdf', minute_pdf=b'%PDF-minute',
+            process_name='Proceso_SECOP_ATENEA-IA-JE-003-2025.pdf',
+            process_pdf=b'%PDF-process', process_reference='ATENEA-IA-JE-003-2025',
+        )
+        app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
+        app.text_input[0].set_value('Atenea 582 2025')
+        app.file_uploader(key='secop_base').set_value(
+            ('base.csv', csv_fixture([example(with_documents=True)]), 'text/csv')
+        )
+        with patch('src.integrations.secop_ui.cached_secop_documents', return_value=documents):
+            app.button(key='consultar_secop').click().run()
+        self.assertFalse(app.exception)
+        labels = [button.label for button in app.get('download_button')]
+        self.assertIn('Descargar minuta oficial (PDF)', labels)
+        self.assertIn('Descargar ficha del proceso SECOP (PDF)', labels)
+        self.assertTrue(any('ATENEA-IA-JE-003-2025' in item.value for item in app.caption))
+

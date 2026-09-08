@@ -3,10 +3,12 @@
 Base modular en Streamlit para preparar el Formato de informe de ejecución y supervisión de ATENEA.
 El usuario indica el número de proceso, puede cargar evidencias PDF o ZIP con PDF, revisa los datos y descarga un Word diligenciado.
 
-## Estado de la versión 0.3
+## Estado de la versión 0.4
 
 - La carga de evidencias es opcional. Cuando se aportan archivos, funciona su lectura, revisión y asociación con las obligaciones. Sin archivos, el Word indica `Sin evidencia asociada`.
-- El número del proceso se busca en `referencia_del_contrato (contratos_electronicos)` del CSV de Oracle. La consulta ignora mayúsculas, espacios y guiones; conserva la referencia original y detecta duplicados. La carga manual de Excel o CSV funciona como respaldo. La descarga de la minuta sigue pendiente.
+- El número del proceso se busca en `referencia_del_contrato (contratos_electronicos)` del CSV de Oracle. La consulta ignora mayúsculas, espacios y guiones; conserva la referencia original y detecta duplicados. La carga manual de Excel o CSV funciona como respaldo.
+- Al encontrar el contrato, la aplicación usa `urlproceso (contratos_electronicos)` e `id_contrato` para localizar la minuta oficial. También genera una ficha PDF del proceso con la API de Datos Abiertos de SECOP II. Ambos documentos quedan disponibles para descarga y todavía no se incorporan automáticamente al borrador.
+- El lector de minutas usa PyMuPDF y conserva pypdf como respaldo. Reconoce la sección `COMPROMISOS ESPECÍFICOS DE LAS IES`, conserva la página de cada obligación y extrae datos contractuales adicionales para revisión.
 - La base completa número contractual, contratista, supervisor, fecha de terminación, modificaciones, porcentaje de ejecución financiera y objeto según el [mapeo acordado](docs/consulta_secop.md). El porcentaje conserva el valor original de SECOP.
 - Las actividades y su relación con las evidencias se ingresan y revisan manualmente. No hay evaluación automática de cumplimiento, OCR, modelos de IA ni firma automática.
 - Sin minuta es posible ingresar manualmente los campos y obligaciones. Sin obligaciones no se genera el Word.
@@ -45,6 +47,7 @@ templates/Plantilla_maestra_informe_supervision_ATENEA_posmedia.docx
 src/config.py
 src/models.py
 src/integrations/secop_lookup.py
+src/integrations/secop_documents.py
 src/integrations/secop_ui.py
 src/extraction/pdf_reader.py
 src/extraction/contract_fields.py
@@ -58,6 +61,8 @@ tests/test_obligations.py
 tests/test_word_report.py
 tests/test_pipeline.py
 tests/test_secop_lookup.py
+tests/test_secop_documents.py
+tests/test_real_minute_patterns.py
 tests/test_app.py
 tests/fixtures/
 docs/guia_usuario.md
@@ -71,3 +76,4 @@ docs/validacion.md
 Los paquetes incluyen `__init__.py`. Las evidencias se procesan en memoria y no se guardan en el repositorio. No suba contratos reales, datos personales ni claves. La configuración del servicio de alojamiento debe revisarse antes de usar información real.
 
 La plantilla fuente se conserva sin cambios, con el nombre solicitado. El generador reemplaza sus datos de ejemplo en una copia y conserva el paquete Word, incluidos encabezados y pies de página.
+

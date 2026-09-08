@@ -15,6 +15,9 @@ Se ignoran mayúsculas/minúsculas, espacios y guiones comunes, incluidos guione
 | Modificaciones | `tipo_modificacion` | Copiar el tipo disponible; no constituye un historial completo |
 | Objeto | `descripcion_del_proceso (contratos_electronicos)` | Copiar íntegro |
 | Porcentaje de avance | `porc_ejecucion_financiera` | Copiar el valor original, sin transformar su escala; el campo permanece revisable |
+| Enlace del proceso | `urlproceso (contratos_electronicos)` | Mostrar enlace y validar el identificador `noticeUID` |
+| Identificador contractual | `id_contrato` | Buscar archivos públicos asociados al contrato |
+| Documento del proveedor | `documento_proveedor (contratos_electronicos)` | Elegir la fila del proveedor en la ficha del proceso |
 
 Nombre identitario, cargo del supervisor, periodo, fecha de presentación, seguridad social y fecha de publicación en SECOP no se infieren todavía. Se completan manualmente o mediante módulos posteriores. Un valor vacío en modificaciones no significa que no existan modificaciones.
 
@@ -30,12 +33,15 @@ Cuando Oracle responde con un error HTTP, falla la red, la respuesta está vací
 
 1. Escriba el número del proceso.
 2. Pulse **Consultar proceso** para usar Oracle. Si la conexión no está configurada o falla, cargue una exportación `.xlsx` o `.csv` como respaldo; la carga manual tiene prioridad. El Excel debe contener la hoja `tabla_maestra_completa`; el CSV debe usar UTF-8 y coma, punto y coma o tabulación.
-3. Revise el registro encontrado y sus datos faltantes.
-4. Si dispone de archivos, cargue las evidencias y la minuta para extraer obligaciones. Ambas cargas son opcionales. Pulse **Preparar borrador**.
-5. Revise los campos y continúe con la generación del informe.
+3. Revise el registro encontrado. Si la base informa el enlace y el identificador contractual, la aplicación localiza la minuta en `SECOP II - Archivos Descarga Desde 2025`, la descarga desde el repositorio público y consulta `SECOP II - Procesos de Contratación` para generar una ficha del proceso. Puede abrir el proceso y descargar los dos PDF desde este panel.
+4. Si dispone de archivos, cargue las evidencias. También puede cargar manualmente una minuta para extraer obligaciones. Ambas cargas son opcionales. Pulse **Preparar borrador**.
+5. Revise los campos y continúe con la generación del informe. En esta versión, los dos PDF recuperados desde SECOP no se incorporan automáticamente al borrador.
 
 Los datos disponibles de la base tienen prioridad sobre la extracción de la minuta; las diferencias se muestran para revisión. Si el número contractual de la minuta no coincide con el consultado, se bloquea la combinación. Cambiar la base, el proceso o el resultado invalida el borrador anterior.
 
 La trazabilidad incluye archivo, hoja, fila, columna y huella SHA-256. El archivo cargado se procesa en memoria de la sesión y no se publica ni se guarda en GitHub. Límites: 50 MB por archivo, 250 MB descomprimidos para Excel y 200.000 registros.
 
 La conexión reutiliza el mismo lector y mapeo validados con el Excel de ejemplo. El ejemplo suministrado no forma parte del repositorio.
+
+El portal web público puede exigir reCAPTCHA a consultas automatizadas. Por eso la aplicación usa los conjuntos oficiales de Datos Abiertos `dmgg-8hin` y `p6dx-8zbt`; la ficha descargable indica claramente que fue generada a partir de esos datos y no que sea una impresión del portal.
+

@@ -9,6 +9,20 @@ from src.generation.word_report import build_docx, MAPPING
 from src.generation.audit import audit_json
 from src.integrations.secop_ui import lookup_panel
 
+ADDITIONAL_FIELDS = {
+    'tipo_instrumento': 'Tipo de instrumento',
+    'nit_contratista': 'NIT del contratista o asociado',
+    'representante_legal': 'Representante legal',
+    'identificacion_representante': 'Identificación del representante legal',
+    'fecha_suscripcion': 'Fecha de suscripción',
+    'fecha_inicio': 'Fecha de inicio',
+    'plazo': 'Plazo indicado en la minuta',
+    'lugar_ejecucion': 'Lugar de ejecución',
+    'valor_total': 'Valor estimado del convenio',
+    'aporte_atenea': 'Aporte de ATENEA',
+    'aporte_contraparte': 'Aporte de la IES o contraparte',
+}
+
 def main():
     st.set_page_config(page_title='Posmedia IA Codex', page_icon='📄', layout='wide')
     st.title('Informe de ejecución y supervisión')
@@ -58,6 +72,16 @@ def main():
                              key=fingerprint + key)
         if value != original.value:
             report.fields[key] = Field(value, 'Ingresado o corregido por el usuario', 'por verificar')
+    additional = [(key, label, report.fields.get(key, Field())) for key, label in ADDITIONAL_FIELDS.items()]
+    additional = [(key, label, field) for key, label, field in additional if field.value != NOT_FOUND]
+    if additional:
+        with st.expander('Información adicional extraída de la minuta'):
+            st.caption('Estos datos no tienen una celda asignada en la plantilla actual, pero quedan disponibles en la trazabilidad.')
+            for key, label, original in additional:
+                value = st.text_input(label, value=original.value, key=fingerprint + 'additional_' + key)
+                st.caption('Fuente: ' + original.source)
+                if value != original.value:
+                    report.fields[key] = Field(value, 'Ingresado o corregido por el usuario', 'por verificar')
     raw = st.text_area('Obligaciones (una por línea; puede corregir o completar la extracción)',
                        value='\n'.join(o.value for o in report.obligations), key=fingerprint + 'obligaciones')
     old = {o.value: o for o in report.obligations}
@@ -95,3 +119,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

@@ -1,4 +1,6 @@
 streamlit==1.63.0
 pypdf>=5,<7
+pymupdf>=1.26,<2
 lxml>=5,<7
 openpyxl>=3.1,<4
+

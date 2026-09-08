@@ -18,13 +18,42 @@ def clean_text(text: str) -> str:
         "",
         text,
     )
+    text = re.sub(r"\[\[PAGE:\d+\]\]", " ", text)
+    text = re.sub(
+        r"(?im)^\s*CONVENIO POR R[ÉE]GIMEN PRIVADO[^\n]*\n"
+        r"\s*DISTRITAL DE EDUCACI[ÓO]N SUPERIOR[^\n]*\n"
+        r"\s*[^\n]{2,120}\.\s*$",
+        "",
+        text,
+    )
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r" *\n *", " ", text)
     return re.sub(r"\s+", " ", text).strip()
 
 
-def extract_obligations(text: str) -> list[dict]:
-    text = clean_text(text)
+def extract_obligations(text: str, pages: list[str] | None = None) -> list[dict]:
+    marked_text = text
+    if pages:
+        marked_text = "\n".join(f"[[PAGE:{page_number}]]\n{page}" for page_number, page in enumerate(pages, 1))
+    text = clean_text(marked_text) if not pages else marked_text
+    if pages:
+        text = text.replace("\u00ad", "").replace("\u2013", "-").replace("\u2014", "-")
+        text = re.sub(
+            r"(?im)^\s*(Carrera 10 No\..*|PBX:.*|www\.agenciaatenea.*|"
+            r"atencionalciudadano.*|Información: Línea 195.*|Página \d+ de \d+)\s*$",
+            "",
+            text,
+        )
+        text = re.sub(
+            r"(?im)^\s*CONVENIO POR R[ÉE]GIMEN PRIVADO[^\n]*\n"
+            r"\s*DISTRITAL DE EDUCACI[ÓO]N SUPERIOR[^\n]*\n"
+            r"\s*[^\n]{2,120}\.\s*$",
+            "",
+            text,
+        )
+        text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r" *\n *", " ", text)
+        text = re.sub(r"\s+", " ", text).strip()
     normalized_parts, offsets = [], []
     for index, char in enumerate(text):
         folded = normalize_for_search(char)
@@ -32,6 +61,7 @@ def extract_obligations(text: str) -> list[dict]:
         offsets.extend([index] * len(folded))
     normalized = ''.join(normalized_parts)
     start_patterns = [
+        r"(?:C[.\)]\s*)?COMPROMISOS ESPECIFICOS DE LAS? IES\s*:?",
         r"(?:C\.\s*)?OBLIGACIONES DE LA INSTITUCION DE EDUCACION SUPERIOR\s*-?\s*IES\s*:\s*(?:SE OBLIGA A\s*:)?",
         r"(?:C\.\s*)?COMPROMISOS DE LA INSTITUCION DE EDUCACION SUPERIOR\s*-?\s*IES\s*:\s*",
         r"OBLIGACIONES (?:ESPECIFICAS )?DE LA IES\s*:\s*",
@@ -51,6 +81,7 @@ def extract_obligations(text: str) -> list[dict]:
         r"\s+PARAGRAFO\.?\s+TODOS LOS DOCUMENTOS",
         r"\s+DECIMA[ .-]+COMITE TECNICO",
         r"\s+D\.\s+OBLIGACIONES",
+        r"\s+D[.\)]\s+COMPROMISOS DE LA AGENCIA",
         r"\s+OBLIGACIONES DE (?:LA )?AGENCIA",
     ]:
         match = re.search(pattern, normalized_tail)
@@ -79,5 +110,11 @@ def extract_obligations(text: str) -> list[dict]:
         end = markers[index + 1].start() if index + 1 < len(markers) else len(section)
         obligation = clean_text(section[marker.end():end]).strip(" ;")
         if obligation:
-            obligations.append({"numero_obligacion": int(marker.group(1)), "obligaciones_especificas": obligation})
+            item = {"numero_obligacion": int(marker.group(1)), "obligaciones_especificas": obligation}
+            if pages:
+                global_position = original_start + marker.start()
+                prior = list(re.finditer(r"\[\[PAGE:(\d+)\]\]", text[:global_position]))
+                item["pagina"] = int(prior[-1].group(1)) if prior else None
+            obligations.append(item)
     return obligations
+

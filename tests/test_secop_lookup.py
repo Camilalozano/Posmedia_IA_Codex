@@ -6,7 +6,8 @@ from urllib.error import HTTPError, URLError
 from openpyxl import Workbook
 from src.config import NOT_FOUND
 from src.integrations.secop_lookup import (
-    ADVANCE, FIELD_MAP, REFERENCE, OracleConnectionError, download_oracle_csv,
+    ADVANCE, CONTRACT_ID, FIELD_MAP, PROCESS_URL, PROVIDER_DOCUMENT, REFERENCE,
+    OracleConnectionError, download_oracle_csv,
     lookup_file, lookup_oracle, normalize_reference,
 )
 from src.processing.pipeline import prepare_report
@@ -14,13 +15,16 @@ from src.processing.pipeline import prepare_report
 
 def csv_fixture(rows):
     out = io.StringIO(newline='')
-    writer = csv.DictWriter(out, fieldnames=list(FIELD_MAP.values()) + [ADVANCE])
+    fieldnames = list(dict.fromkeys(list(FIELD_MAP.values()) + [
+        ADVANCE, PROCESS_URL, CONTRACT_ID, PROVIDER_DOCUMENT,
+    ]))
+    writer = csv.DictWriter(out, fieldnames=fieldnames)
     writer.writeheader()
     writer.writerows(rows)
     return out.getvalue().encode('utf-8-sig')
 
 
-def example(reference='ATENEA-582-2025'):
+def example(reference='ATENEA-582-2025', with_documents=False):
     return {
         REFERENCE: reference,
         FIELD_MAP['nombre_contratista_asociado']: 'INSTITUCIÓN FICTICIA',
@@ -29,6 +33,10 @@ def example(reference='ATENEA-582-2025'):
         FIELD_MAP['modificaciones']: 'Prórroga',
         FIELD_MAP['objeto']: 'Objeto ficticio; verificar la lectura íntegra, sin recortes.',
         ADVANCE: '1000',
+        PROCESS_URL: ('https://community.secop.gov.co/Public/Tendering/OpportunityDetail/'
+                      'Index?noticeUID=CO1.NTC.8836482') if with_documents else '',
+        CONTRACT_ID: 'CO1.PCCNTR.8724386' if with_documents else '',
+        PROVIDER_DOCUMENT: '860026058' if with_documents else '',
     }
 
 
@@ -113,6 +121,13 @@ class LookupTests(unittest.TestCase):
         self.assertNotIn('cargo_supervisor', result.fields)
         self.assertTrue(result.warnings)
 
+    def test_document_metadata_is_exposed_without_adding_report_fields(self):
+        result = lookup_file('base.csv', csv_fixture([example(with_documents=True)]), 'ATENEA5822025')
+        self.assertIn('noticeUID=CO1.NTC.8836482', result.process_url)
+        self.assertEqual(result.contract_id, 'CO1.PCCNTR.8724386')
+        self.assertEqual(result.provider_document, '860026058')
+        self.assertNotIn('process_url', result.fields)
+
     def test_missing_financial_execution_is_reported(self):
         row = example()
         row[ADVANCE] = ''
@@ -133,3 +148,4 @@ class LookupTests(unittest.TestCase):
     def test_bad_schema(self):
         with self.assertRaisesRegex(ValueError, 'columna requerida'):
             lookup_file('base.csv', b'numero,valor\nATENEA-582-2025,1', 'atenea5822025')
+
