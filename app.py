@@ -25,7 +25,7 @@ ADDITIONAL_FIELDS = {
 
 def main():
     st.set_page_config(page_title='Posmedia IA Codex', page_icon='📄', layout='wide')
-    st.title('Informe de ejecución y supervisión')
+    st.title('Informe de ejecución y supervisión - posmedia')
     st.caption('Posmedia · ATENEA · Consulta de base contractual')
     process = st.text_input('Número del proceso', placeholder='ATENEA-582-2025')
     lookup, lookup_token, secop_documents = lookup_panel(process)
