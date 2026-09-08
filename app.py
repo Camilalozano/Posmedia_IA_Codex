@@ -53,6 +53,9 @@ def main():
     if selected_contract:
         signature.update(selected_contract[0].encode())
         signature.update(selected_contract[1])
+    if secop_documents and secop_documents.archive_bytes:
+        signature.update(secop_documents.archive_name.encode())
+        signature.update(secop_documents.archive_bytes)
     for name, data in evidence_inputs:
         signature.update(name.encode())
         signature.update(data)
@@ -63,7 +66,7 @@ def main():
     if st.button('Preparar borrador', type='primary'):
         try:
             report = prepare_report(process, selected_contract,
-                                    evidence_inputs, lookup=lookup)
+                                    evidence_inputs, lookup=lookup, secop_documents=secop_documents)
             st.session_state['report'] = report
             st.session_state['fingerprint'] = fingerprint
             st.session_state.pop('output', None)

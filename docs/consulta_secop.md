@@ -33,7 +33,7 @@ Cuando Oracle responde con un error HTTP, falla la red, la respuesta está vací
 
 1. Escriba el número del proceso.
 2. Pulse **Consultar proceso** para usar Oracle. Si la conexión no está configurada o falla, cargue una exportación `.xlsx` o `.csv` como respaldo; la carga manual tiene prioridad. El Excel debe contener la hoja `tabla_maestra_completa`; el CSV debe usar UTF-8 y coma, punto y coma o tabulación.
-3. Revise el registro encontrado. Si la base informa el enlace y el identificador contractual, la aplicación localiza la minuta en `SECOP II - Archivos Descarga Desde 2025`, la descarga desde el repositorio público y consulta `SECOP II - Procesos de Contratación` para generar una ficha del proceso. Puede abrir el proceso y descargar los dos PDF desde este panel.
+3. Revise el registro encontrado. Si la base informa el enlace y el identificador contractual, la aplicación consulta `SECOP II - Archivos Descarga Desde 2025`, descarga todos los documentos vinculados al `id_contrato` y consulta `SECOP II - Procesos de Contratación` para generar una ficha del proceso. Puede abrir el proceso y descargar la minuta, la ficha PDF y un ZIP con el expediente documental disponible.
 4. Revise las tablas de campos y obligaciones extraídas de la minuta. Cada resultado muestra su página o fuente. Si carga otra minuta manualmente, esta tendrá prioridad sobre la descargada.
 5. Si dispone de archivos, cargue las evidencias y pulse **Preparar borrador**. La minuta descargada se incorpora automáticamente a los campos y obligaciones revisables. La ficha PDF del proceso permanece como documento de consulta y no se mezcla todavía con el informe.
 
@@ -44,3 +44,5 @@ La trazabilidad incluye archivo, hoja, fila, columna y huella SHA-256. El archiv
 La conexión reutiliza el mismo lector y mapeo validados con el Excel de ejemplo. El ejemplo suministrado no forma parte del repositorio.
 
 El portal web público puede exigir reCAPTCHA a consultas automatizadas. Por eso la aplicación usa los conjuntos oficiales de Datos Abiertos `dmgg-8hin` y `p6dx-8zbt`; la ficha descargable indica claramente que fue generada a partir de esos datos y no que sea una impresión del portal.
+
+El ZIP conserva cada archivo en su formato original, incluidos PDF, Excel y ZIP publicados por SECOP, sin expandir archivos internos. Incluye `inventario_documentos_secop.csv` con el ID, nombre, extensión, tamaño descargado, fecha, descripción, estado, huella SHA-256 y enlace de origen. Para proteger la memoria del servicio se permiten hasta 100 documentos, 30 MB por archivo y 100 MB descargados en total. Los archivos que fallen quedan señalados en el inventario y en la interfaz.

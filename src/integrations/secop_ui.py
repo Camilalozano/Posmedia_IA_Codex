@@ -121,6 +121,27 @@ def lookup_panel(process):
                         'La ficha se genera con Datos Abiertos de SECOP II para el proceso '
                         + documents.process_reference + '.'
                     )
+                if documents.archive_bytes:
+                    st.download_button(
+                        'Descargar todos los documentos SECOP (ZIP)', documents.archive_bytes,
+                        file_name=documents.archive_name, mime='application/zip',
+                        key='descargar_documentos_secop_zip',
+                    )
+                    st.caption(
+                        f'El ZIP contiene {documents.archive_count} documentos descargados y un inventario CSV. '
+                        'Se conserva como insumo para las siguientes etapas de análisis.'
+                    )
+                    with st.expander('Ver inventario de documentos SECOP'):
+                        st.dataframe([
+                            {
+                                'Documento': item['nombre_archivo'],
+                                'Tipo': item['extension'].upper(),
+                                'Tamaño': f"{item['tamano_bytes'] / 1024:,.1f} KB",
+                                'Fecha de carga': item['fecha_carga'],
+                                'Estado': item['estado'],
+                            }
+                            for item in documents.archive_inventory
+                        ], hide_index=True)
                 for warning in documents.warnings:
                     st.warning(warning)
                 extraction = st.session_state.get('secop_minute_extraction')

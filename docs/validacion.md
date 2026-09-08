@@ -1,5 +1,11 @@
 # Validación inicial
 
+## Expediente documental SECOP de la versión 0.7
+
+Para `CO1.PCCNTR.8724386`, el conjunto oficial informa 11 documentos y aproximadamente 8,4 MB: PDF, dos ZIP y un XLSX. La validación comprueba que el archivo consolidado conserva los formatos originales, no expande los ZIP internos e incluye un inventario CSV. El ZIP también queda identificado por nombre, cantidad y SHA-256 en la trazabilidad del borrador.
+
+La descarga real generó `Documentos_SECOP_ATENEA-582-2025.zip` con los 11 documentos, el inventario y 5,8 MB comprimidos. La comprobación integral del ZIP no encontró archivos dañados. Se aprobaron 39 pruebas automatizadas.
+
 ## Insumos SICORE y seguridad social de la versión 0.6
 
 La interfaz incluye cargadores PDF separados para `Informe SICORE` y `Planilla Seguridad Social`. Una prueba de interfaz confirma que ambos archivos se incorporan con su categoría al inventario de evidencias del borrador.

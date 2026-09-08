@@ -28,7 +28,7 @@ def extract_minute(name, data):
     return fields, obligations
 
 
-def prepare_report(process_number, contract, uploads, lookup=None):
+def prepare_report(process_number, contract, uploads, lookup=None, secop_documents=None):
     process_number = process_number.strip()
     if not process_number:
         raise ValueError('Indique el número de proceso.')
@@ -75,6 +75,13 @@ def prepare_report(process_number, contract, uploads, lookup=None):
             'name': contract[0],
             'sha256': hashlib.sha256(contract[1]).hexdigest(),
             'origin': 'SECOP automático o carga manual, según la selección mostrada en la interfaz',
+        }
+    if secop_documents and secop_documents.archive_bytes:
+        report.contract_source['secop_documents_archive'] = {
+            'name': secop_documents.archive_name,
+            'sha256': hashlib.sha256(secop_documents.archive_bytes).hexdigest(),
+            'downloaded_documents': secop_documents.archive_count,
+            'purpose': 'Insumo conservado para etapas posteriores de explotación documental',
         }
     if lookup:
         report.contract_source.update({

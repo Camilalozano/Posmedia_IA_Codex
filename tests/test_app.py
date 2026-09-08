@@ -89,6 +89,11 @@ class AppTests(unittest.TestCase):
             minute_name='ATENEA-582-2025 EAN.pdf', minute_pdf=minute_pdf,
             process_name='Proceso_SECOP_ATENEA-IA-JE-003-2025.pdf',
             process_pdf=b'%PDF-process', process_reference='ATENEA-IA-JE-003-2025',
+            archive_name='Documentos_SECOP_ATENEA-582-2025.zip', archive_bytes=b'PK-archive',
+            archive_count=1, archive_inventory=[{
+                'nombre_archivo': 'ATENEA-582-2025 EAN.pdf', 'extension': 'pdf',
+                'tamano_bytes': len(minute_pdf), 'fecha_carga': '2025-12-23', 'estado': 'Descargado',
+            }],
         )
         app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
         app.text_input[0].set_value('Atenea 582 2025')
@@ -101,6 +106,7 @@ class AppTests(unittest.TestCase):
         labels = [button.label for button in app.get('download_button')]
         self.assertIn('Descargar minuta oficial (PDF)', labels)
         self.assertIn('Descargar ficha del proceso SECOP (PDF)', labels)
+        self.assertIn('Descargar todos los documentos SECOP (ZIP)', labels)
         self.assertTrue(any('ATENEA-IA-JE-003-2025' in item.value for item in app.caption))
         self.assertTrue(any('Se extrajeron 2 obligaciones' in item.value for item in app.caption))
 
@@ -109,7 +115,8 @@ class AppTests(unittest.TestCase):
         documents = SecopDocuments(
             minute_name='Minuta_ATENEA-999-2026.pdf', minute_pdf=minute_pdf,
             process_name='Proceso_SECOP_PRUEBA.pdf', process_pdf=b'%PDF-process',
-            process_reference='PROCESO-PRUEBA',
+            process_reference='PROCESO-PRUEBA', archive_name='Documentos_SECOP_PRUEBA.zip',
+            archive_bytes=b'PK-archive', archive_count=2,
         )
         app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
         app.text_input[0].set_value('Atenea 999 2026')
@@ -125,3 +132,6 @@ class AppTests(unittest.TestCase):
         obligations = next(area for area in app.text_area if area.label.startswith('Obligaciones'))
         self.assertIn('1. Reportar avances de formacion del periodo.', obligations.value)
         self.assertIn('2. Entregar un informe con sus evidencias.', obligations.value)
+        archive = app.session_state['report'].contract_source['secop_documents_archive']
+        self.assertEqual(archive['name'], 'Documentos_SECOP_PRUEBA.zip')
+        self.assertEqual(archive['downloaded_documents'], 2)
