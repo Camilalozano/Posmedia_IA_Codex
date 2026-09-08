@@ -3,9 +3,10 @@
 Base modular en Streamlit para preparar el Formato de informe de ejecución y supervisión de ATENEA.
 El usuario indica el número de proceso, puede cargar evidencias PDF o ZIP con PDF, revisa los datos y descarga un Word diligenciado.
 
-## Estado de la versión 0.5
+## Estado de la versión 0.6
 
 - La carga de evidencias es opcional. Cuando se aportan archivos, funciona su lectura, revisión y asociación con las obligaciones. Sin archivos, el Word indica `Sin evidencia asociada`.
+- Hay cargadores PDF independientes para **Informe SICORE** y **Planilla Seguridad Social**. Los dos documentos se incorporan al inventario de evidencias con una identificación explícita.
 - El número del proceso se busca en `referencia_del_contrato (contratos_electronicos)` del CSV de Oracle. La consulta ignora mayúsculas, espacios y guiones; conserva la referencia original y detecta duplicados. La carga manual de Excel o CSV funciona como respaldo.
 - Al encontrar el contrato, la aplicación usa `urlproceso (contratos_electronicos)` e `id_contrato` para localizar la minuta oficial. También genera una ficha PDF del proceso con la API de Datos Abiertos de SECOP II. Ambos documentos quedan disponibles para descarga.
 - La minuta descargada se analiza automáticamente. La interfaz muestra tablas de campos y obligaciones con su fuente, y **Preparar borrador** incorpora esa información sin exigir que el usuario vuelva a cargar el PDF. Una minuta cargada manualmente tiene prioridad.

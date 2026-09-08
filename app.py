@@ -36,6 +36,16 @@ def main():
         st.caption('Se usará automáticamente la minuta descargada de SECOP para preparar el borrador.')
     selected_contract = (contract.name, contract.getvalue()) if contract else automatic_contract
     uploads = st.file_uploader('Evidencias del periodo (opcional)', type=['pdf', 'zip'], accept_multiple_files=True, key='evidencias')
+    sicore_column, social_security_column = st.columns(2)
+    with sicore_column:
+        sicore = st.file_uploader('Informe SICORE', type=['pdf'], key='informe_sicore')
+    with social_security_column:
+        social_security = st.file_uploader('Planilla Seguridad Social', type=['pdf'], key='planilla_seguridad_social')
+    evidence_inputs = [(f.name, f.getvalue()) for f in uploads or []]
+    if sicore:
+        evidence_inputs.append(('Informe SICORE · ' + sicore.name, sicore.getvalue()))
+    if social_security:
+        evidence_inputs.append(('Planilla Seguridad Social · ' + social_security.name, social_security.getvalue()))
     signature = hashlib.sha256()
     signature.update(process.encode())
     signature.update(lookup_token.encode())
@@ -43,9 +53,9 @@ def main():
     if selected_contract:
         signature.update(selected_contract[0].encode())
         signature.update(selected_contract[1])
-    for upload in list(uploads or []):
-        signature.update(upload.name.encode())
-        signature.update(upload.getvalue())
+    for name, data in evidence_inputs:
+        signature.update(name.encode())
+        signature.update(data)
     fingerprint = signature.hexdigest()
     if st.session_state.get('fingerprint') != fingerprint:
         st.session_state.pop('report', None)
@@ -53,7 +63,7 @@ def main():
     if st.button('Preparar borrador', type='primary'):
         try:
             report = prepare_report(process, selected_contract,
-                                    [(f.name, f.getvalue()) for f in uploads or []], lookup=lookup)
+                                    evidence_inputs, lookup=lookup)
             st.session_state['report'] = report
             st.session_state['fingerprint'] = fingerprint
             st.session_state.pop('output', None)

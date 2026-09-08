@@ -57,6 +57,21 @@ class AppTests(unittest.TestCase):
         self.assertFalse(app.exception)
         self.assertEqual(len(app.get('download_button')), 2)
 
+    def test_sicore_and_social_security_are_added_to_evidence_inventory(self):
+        data = (ROOT / 'tests/fixtures/minuta_ejemplo.pdf').read_bytes()
+        app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
+        app.text_input[0].set_value('PROCESO-PRUEBA')
+        app.file_uploader(key='minuta').set_value(('minuta.pdf', data, 'application/pdf'))
+        app.file_uploader(key='informe_sicore').set_value(('sicore.pdf', data, 'application/pdf'))
+        app.file_uploader(key='planilla_seguridad_social').set_value(
+            ('planilla.pdf', data + b'\n', 'application/pdf')
+        )
+        next(x for x in app.button if x.label == 'Preparar borrador').click().run()
+        self.assertFalse(app.exception)
+        names = [e.name for e in app.session_state['report'].evidence]
+        self.assertIn('Informe SICORE · sicore.pdf', names)
+        self.assertIn('Planilla Seguridad Social · planilla.pdf', names)
+
     def test_connection_error_tells_admin_to_replace_par(self):
         with patch.dict('os.environ', {}, clear=False):
             app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20)

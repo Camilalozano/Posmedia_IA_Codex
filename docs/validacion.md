@@ -1,5 +1,9 @@
 # Validación inicial
 
+## Insumos SICORE y seguridad social de la versión 0.6
+
+La interfaz incluye cargadores PDF separados para `Informe SICORE` y `Planilla Seguridad Social`. Una prueba de interfaz confirma que ambos archivos se incorporan con su categoría al inventario de evidencias del borrador.
+
 ## Descarga y extracción SECOP de la versión 0.5
 
 Se validó el flujo completo con `ATENEA-582-2025`: la API oficial de archivos devolvió la minuta `ATENEA-582-2025 EAN.pdf` (373.436 bytes), la minuta permitió identificar el proceso `ATENEA-IA-JE-003-2025` y la API oficial de procesos devolvió la fila adjudicada a Universidad EAN. La ficha PDF generada fue abierta, renderizada y revisada visualmente.
