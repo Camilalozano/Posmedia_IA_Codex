@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 from pathlib import Path
+from types import SimpleNamespace
 from streamlit.testing.v1 import AppTest
 from src.integrations.secop_documents import SecopDocuments
 from tests.test_secop_lookup import csv_fixture, example
@@ -9,6 +10,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class AppTests(unittest.TestCase):
+    def test_previous_session_without_archive_fields_does_not_crash(self):
+        app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
+        app.session_state['secop_token'] = ('', ('oracle', ''))
+        app.session_state['secop_documents'] = SimpleNamespace(
+            minute_name='', minute_pdf=b'', process_name='', process_pdf=b'',
+            process_reference='', warnings=[],
+        )
+        app.run()
+        self.assertFalse(app.exception)
+
     def test_upload_review_generate_and_invalidate(self):
         data = (ROOT / 'tests/fixtures/minuta_ejemplo.pdf').read_bytes()
         app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()

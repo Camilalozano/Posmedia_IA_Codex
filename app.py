@@ -53,9 +53,10 @@ def main():
     if selected_contract:
         signature.update(selected_contract[0].encode())
         signature.update(selected_contract[1])
-    if secop_documents and secop_documents.archive_bytes:
-        signature.update(secop_documents.archive_name.encode())
-        signature.update(secop_documents.archive_bytes)
+    archive_bytes = getattr(secop_documents, 'archive_bytes', b'') if secop_documents else b''
+    if archive_bytes:
+        signature.update(getattr(secop_documents, 'archive_name', '').encode())
+        signature.update(archive_bytes)
     for name, data in evidence_inputs:
         signature.update(name.encode())
         signature.update(data)

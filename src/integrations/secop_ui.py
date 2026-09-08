@@ -121,14 +121,16 @@ def lookup_panel(process):
                         'La ficha se genera con Datos Abiertos de SECOP II para el proceso '
                         + documents.process_reference + '.'
                     )
-                if documents.archive_bytes:
+                archive_bytes = getattr(documents, 'archive_bytes', b'')
+                if archive_bytes:
                     st.download_button(
-                        'Descargar todos los documentos SECOP (ZIP)', documents.archive_bytes,
-                        file_name=documents.archive_name, mime='application/zip',
+                        'Descargar todos los documentos SECOP (ZIP)', archive_bytes,
+                        file_name=getattr(documents, 'archive_name', 'Documentos_SECOP.zip'),
+                        mime='application/zip',
                         key='descargar_documentos_secop_zip',
                     )
                     st.caption(
-                        f'El ZIP contiene {documents.archive_count} documentos descargados y un inventario CSV. '
+                        f"El ZIP contiene {getattr(documents, 'archive_count', 0)} documentos descargados y un inventario CSV. "
                         'Se conserva como insumo para las siguientes etapas de análisis.'
                     )
                     with st.expander('Ver inventario de documentos SECOP'):
@@ -140,8 +142,13 @@ def lookup_panel(process):
                                 'Fecha de carga': item['fecha_carga'],
                                 'Estado': item['estado'],
                             }
-                            for item in documents.archive_inventory
+                            for item in getattr(documents, 'archive_inventory', [])
                         ], hide_index=True)
+                elif not hasattr(documents, 'archive_bytes'):
+                    st.info(
+                        'La consulta corresponde a una sesión anterior. Pulse “Consultar proceso” '
+                        'para generar el ZIP de documentos SECOP.'
+                    )
                 for warning in documents.warnings:
                     st.warning(warning)
                 extraction = st.session_state.get('secop_minute_extraction')
