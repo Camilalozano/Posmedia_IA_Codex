@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from streamlit.testing.v1 import AppTest
 from src.integrations.secop_documents import SecopDocuments
+from src.integrations.secop_lookup import lookup_file
 from tests.test_secop_lookup import csv_fixture, example
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +13,11 @@ ROOT = Path(__file__).resolve().parents[1]
 class AppTests(unittest.TestCase):
     def test_previous_session_without_archive_fields_does_not_crash(self):
         app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
+        self.assertTrue(any(
+            item.label == 'Actualizar ruta PAR al archivo' and item.proto.type == 1
+            for item in app.text_input
+        ))
+        self.assertFalse(any(item.key == 'secop_base' for item in app.file_uploader))
         app.session_state['secop_token'] = ('', ('oracle', ''))
         app.session_state['secop_documents'] = SimpleNamespace(
             minute_name='', minute_pdf=b'', process_name='', process_pdf=b'',
@@ -42,8 +48,12 @@ class AppTests(unittest.TestCase):
     def test_lookup_prefills_report_and_base_change_invalidates_it(self):
         app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
         app.text_input[0].set_value('Atenea 582 2025')
-        app.file_uploader(key='secop_base').set_value(('base.csv', csv_fixture([example()]), 'text/csv'))
-        app.button(key='consultar_secop').click().run()
+        next(item for item in app.text_input if item.key == 'oracle_par_override').set_value(
+            'https://objectstorage.us-ashburn-1.oraclecloud.com/p/nuevo/tabla.csv'
+        )
+        result = lookup_file('base.csv', csv_fixture([example()]), 'Atenea 582 2025')
+        with patch('src.integrations.secop_ui.lookup_oracle', return_value=result):
+            app.button(key='consultar_secop').click().run()
         self.assertFalse(app.exception)
         self.assertTrue(any('ATENEA-582-2025' in item.value for item in app.success))
         data = (ROOT / 'tests/fixtures/minuta_ejemplo.pdf').read_bytes()
@@ -51,7 +61,9 @@ class AppTests(unittest.TestCase):
         next(x for x in app.button if x.label == 'Preparar borrador').click().run()
         self.assertFalse(app.exception)
         self.assertEqual(app.text_area[0].value, 'ATENEA-582-2025')
-        app.file_uploader(key='secop_base').clear().run()
+        next(item for item in app.text_input if item.key == 'oracle_par_override').set_value(
+            'https://objectstorage.us-ashburn-1.oraclecloud.com/p/otro/tabla.csv'
+        ).run()
         self.assertEqual(len(app.text_area), 0)
         self.assertEqual(len(app.success), 0)
 
@@ -90,9 +102,9 @@ class AppTests(unittest.TestCase):
             app.run()
             app.text_input[0].set_value('ATENEA-582-2025')
             with patch('src.integrations.secop_ui.lookup_oracle', side_effect=RuntimeError(
-                    'No fue posible conectar con la base de Oracle. Revisa e ingresa un nuevo PAR en la configuración Secrets de Streamlit, con el nombre ORACLE_PAR_URL, y vuelve a intentar.')):
+                    'No fue posible conectar con la base de Oracle. Revisa e ingresa un nuevo PAR en el campo “Actualizar ruta PAR al archivo” y vuelve a intentar.')):
                 app.button(key='consultar_secop').click().run()
-            self.assertTrue(any('nuevo PAR' in item.value and 'ORACLE_PAR_URL' in item.value for item in app.error))
+            self.assertTrue(any('nuevo PAR' in item.value and 'Actualizar ruta PAR' in item.value for item in app.error))
 
     def test_lookup_exposes_process_link_and_two_pdfs(self):
         minute_pdf = (ROOT / 'tests/fixtures/minuta_ejemplo.pdf').read_bytes()
@@ -108,10 +120,14 @@ class AppTests(unittest.TestCase):
         )
         app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
         app.text_input[0].set_value('Atenea 582 2025')
-        app.file_uploader(key='secop_base').set_value(
-            ('base.csv', csv_fixture([example(with_documents=True)]), 'text/csv')
+        next(item for item in app.text_input if item.key == 'oracle_par_override').set_value(
+            'https://objectstorage.us-ashburn-1.oraclecloud.com/p/nuevo/tabla.csv'
         )
-        with patch('src.integrations.secop_ui.cached_secop_documents', return_value=documents):
+        result = lookup_file(
+            'base.csv', csv_fixture([example(with_documents=True)]), 'Atenea 582 2025'
+        )
+        with patch('src.integrations.secop_ui.lookup_oracle', return_value=result), \
+                patch('src.integrations.secop_ui.cached_secop_documents', return_value=documents):
             app.button(key='consultar_secop').click().run()
         self.assertFalse(app.exception)
         labels = [button.label for button in app.get('download_button')]
@@ -131,10 +147,15 @@ class AppTests(unittest.TestCase):
         )
         app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
         app.text_input[0].set_value('Atenea 999 2026')
-        app.file_uploader(key='secop_base').set_value(
-            ('base.csv', csv_fixture([example('ATENEA-999-2026', with_documents=True)]), 'text/csv')
+        next(item for item in app.text_input if item.key == 'oracle_par_override').set_value(
+            'https://objectstorage.us-ashburn-1.oraclecloud.com/p/nuevo/tabla.csv'
         )
-        with patch('src.integrations.secop_ui.cached_secop_documents', return_value=documents):
+        result = lookup_file(
+            'base.csv', csv_fixture([example('ATENEA-999-2026', with_documents=True)]),
+            'Atenea 999 2026',
+        )
+        with patch('src.integrations.secop_ui.lookup_oracle', return_value=result), \
+                patch('src.integrations.secop_ui.cached_secop_documents', return_value=documents):
             app.button(key='consultar_secop').click().run()
         self.assertTrue(any('Se usará automáticamente la minuta' in item.value for item in app.caption))
         next(x for x in app.button if x.label == 'Preparar borrador').click().run()

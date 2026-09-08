@@ -65,7 +65,7 @@ class LookupTests(unittest.TestCase):
                 download_oracle_csv(url, opener=opener)
             message = str(raised.exception)
             self.assertIn('nuevo PAR', message)
-            self.assertIn('ORACLE_PAR_URL', message)
+            self.assertIn('Actualizar ruta PAR', message)
             self.assertNotIn('very-secret', message)
 
     def test_oracle_rejects_wrong_destination(self):
@@ -148,4 +148,3 @@ class LookupTests(unittest.TestCase):
     def test_bad_schema(self):
         with self.assertRaisesRegex(ValueError, 'columna requerida'):
             lookup_file('base.csv', b'numero,valor\nATENEA-582-2025,1', 'atenea5822025')
-

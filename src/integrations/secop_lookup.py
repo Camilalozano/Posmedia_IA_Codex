@@ -48,8 +48,8 @@ def oracle_connection_message(detail=''):
     suffix = f' ({detail})' if detail else ''
     return (
         'No fue posible conectar con la base de Oracle' + suffix + '. '
-        'Revisa e ingresa un nuevo PAR en la configuración Secrets de Streamlit, '
-        'con el nombre ORACLE_PAR_URL, y vuelve a intentar.'
+        'Revisa e ingresa un nuevo PAR en el campo “Actualizar ruta PAR al archivo” '
+        'y vuelve a intentar.'
     )
 
 
@@ -229,4 +229,3 @@ def lookup_oracle(par_url, query, opener=urlopen):
     except (UnicodeDecodeError, ValueError) as error:
         # El enlace puede apuntar a un objeto distinto o a una exportación incompatible.
         raise OracleConnectionError(oracle_connection_message('archivo incompatible: ' + str(error))) from None
-

@@ -25,14 +25,14 @@ El porcentaje de avance se toma de la ejecución financiera. La aplicación cons
 
 ## Conexión automática a Oracle
 
-El PAR se configura como `ORACLE_PAR_URL` en los Secrets de Streamlit. Nunca se escribe en el repositorio, la interfaz, los mensajes de error ni la trazabilidad. Solo se aceptan enlaces HTTPS del Object Storage de Oracle en Ashburn. La descarga tiene un límite de 50 MB y un tiempo de espera definido.
+El PAR predeterminado se configura como `ORACLE_PAR_URL` en los Secrets de Streamlit. La interfaz permite ingresar un reemplazo mediante el campo protegido **Actualizar ruta PAR al archivo**; el reemplazo se usa durante la sesión y no se escribe en el repositorio ni en la trazabilidad. Solo se aceptan enlaces HTTPS del Object Storage de Oracle en Ashburn. La descarga tiene un límite de 50 MB y un tiempo de espera definido.
 
-Cuando Oracle responde con un error HTTP, falla la red, la respuesta está vacía o el archivo no tiene el esquema esperado, la interfaz indica que se debe revisar e ingresar un PAR nuevo en `ORACLE_PAR_URL`. El mensaje muestra el tipo general de problema, sin incluir el enlace firmado.
+Cuando Oracle responde con un error HTTP, falla la red, la respuesta está vacía o el archivo no tiene el esquema esperado, la interfaz indica que se debe ingresar un PAR nuevo en **Actualizar ruta PAR al archivo**. El mensaje muestra el tipo general de problema, sin incluir el enlace firmado.
 
 ## Uso
 
 1. Escriba el número del proceso.
-2. Pulse **Consultar proceso** para usar Oracle. Si la conexión no está configurada o falla, cargue una exportación `.xlsx` o `.csv` como respaldo; la carga manual tiene prioridad. El Excel debe contener la hoja `tabla_maestra_completa`; el CSV debe usar UTF-8 y coma, punto y coma o tabulación.
+2. Pulse **Consultar proceso** para usar Oracle. Si el enlace configurado vence, pegue el PAR nuevo en **Actualizar ruta PAR al archivo** y consulte otra vez. El PAR ingresado tiene prioridad sobre el configurado durante la sesión.
 3. Revise el registro encontrado. Si la base informa el enlace y el identificador contractual, la aplicación consulta `SECOP II - Archivos Descarga Desde 2025`, descarga todos los documentos vinculados al `id_contrato` y consulta `SECOP II - Procesos de Contratación` para generar una ficha del proceso. Puede abrir el proceso y descargar la minuta, la ficha PDF y un ZIP con el expediente documental disponible.
 4. Revise las tablas de campos y obligaciones extraídas de la minuta. Cada resultado muestra su página o fuente. Si carga otra minuta manualmente, esta tendrá prioridad sobre la descargada.
 5. Si dispone de archivos, cargue las evidencias y pulse **Preparar borrador**. La minuta descargada se incorpora automáticamente a los campos y obligaciones revisables. La ficha PDF del proceso permanece como documento de consulta y no se mezcla todavía con el informe.

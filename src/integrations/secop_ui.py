@@ -3,7 +3,7 @@ import hashlib
 import streamlit as st
 from src.config import NOT_FOUND
 from src.integrations.secop_documents import notice_uid, prepare_secop_documents, SecopDocumentError
-from src.integrations.secop_lookup import lookup_file, lookup_oracle, normalize_reference
+from src.integrations.secop_lookup import lookup_oracle, normalize_reference
 from src.processing.pipeline import extract_minute
 
 
@@ -29,15 +29,26 @@ def configured_par():
 def lookup_panel(process):
     st.caption('La búsqueda admite mayúsculas, minúsculas, espacios y guiones. Ejemplo: Atenea 582 2025.')
     with st.expander('Consultar datos de la base contractual', expanded=True):
-        par_url = configured_par()
-        if par_url:
-            st.info('La consulta automática a Oracle está configurada. Si falla, puede cargar una base manual como respaldo.')
+        configured_url = configured_par()
+        par_override = st.text_input(
+            'Actualizar ruta PAR al archivo',
+            type='password',
+            key='oracle_par_override',
+            placeholder='https://objectstorage.us-ashburn-1.oraclecloud.com/p/...',
+            help=(
+                'Pegue aquí un PAR nuevo cuando el enlace configurado haya vencido. '
+                'Se utilizará durante esta sesión y no se incluirá en la trazabilidad.'
+            ),
+        ).strip()
+        par_url = par_override or configured_url
+        if par_override:
+            st.info('Se usará el PAR ingresado en esta sesión.')
+        elif configured_url:
+            st.info('La consulta automática a Oracle está configurada. Puede ingresar arriba un PAR nuevo para reemplazarla durante esta sesión.')
         else:
-            st.warning('La conexión automática no está configurada. Ingresa el PAR en Secrets de Streamlit con el nombre ORACLE_PAR_URL o carga una base manual.')
-        upload = st.file_uploader('Base contractual de respaldo (Excel o CSV, opcional)', type=['xlsx', 'csv'], key='secop_base')
-        digest = hashlib.sha256(upload.getvalue()).hexdigest() if upload else ''
+            st.warning('La conexión automática no está configurada. Ingrese un PAR válido para consultar la base de Oracle.')
         par_digest = hashlib.sha256(par_url.encode()).hexdigest() if par_url else ''
-        source_token = ('manual', upload.name, digest) if upload else ('oracle', par_digest)
+        source_token = ('oracle', par_digest)
         token = (normalize_reference(process), source_token)
         if st.session_state.get('secop_token') != token:
             st.session_state.pop('secop_result', None)
@@ -54,14 +65,12 @@ def lookup_panel(process):
             st.session_state.pop('secop_minute_extraction_error', None)
             try:
                 with st.spinner('Buscando la referencia contractual…'):
-                    if upload:
-                        result = lookup_file(upload.name, upload.getvalue(), process)
-                    elif par_url:
+                    if par_url:
                         result = lookup_oracle(par_url, process)
                     else:
                         result = None
-                        st.warning('Configura ORACLE_PAR_URL o carga una base contractual de respaldo.')
-                if result is None and (upload or par_url):
+                        st.warning('Ingrese un PAR válido antes de consultar.')
+                if result is None and par_url:
                     st.warning('No se encontró esa referencia en la base consultada.')
                 elif result is not None:
                     st.session_state['secop_result'] = result

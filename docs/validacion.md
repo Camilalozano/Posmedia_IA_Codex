@@ -1,5 +1,9 @@
 # Validación inicial
 
+## Actualización del PAR de la versión 0.8
+
+La interfaz reemplazó la carga de una base contractual de respaldo por el campo protegido **Actualizar ruta PAR al archivo**. El enlace ingresado tiene prioridad durante la sesión, invalida resultados obtenidos con otro PAR y no se incorpora a la trazabilidad. Los errores de conexión remiten al nuevo campo sin revelar el enlace firmado. Se aprobaron 40 pruebas automatizadas.
+
 ## Expediente documental SECOP de la versión 0.7
 
 Para `CO1.PCCNTR.8724386`, el conjunto oficial informa 11 documentos y aproximadamente 8,4 MB: PDF, dos ZIP y un XLSX. La validación comprueba que el archivo consolidado conserva los formatos originales, no expande los ZIP internos e incluye un inventario CSV. El ZIP también queda identificado por nombre, cantidad y SHA-256 en la trazabilidad del borrador.
