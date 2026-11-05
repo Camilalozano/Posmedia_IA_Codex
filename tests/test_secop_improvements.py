@@ -71,6 +71,17 @@ class ExtractionTests(unittest.TestCase):
 
 
 class SourceTests(unittest.TestCase):
+    @patch('src.integrations.secop_documents.download_document')
+    def test_corrupt_pdf_does_not_prevent_next_candidate(self, download):
+        from tests.test_secop_documents import simple_pdf
+        valid = simple_pdf('OBLIGACIONES DE LA IES: 1. Reportar. D. OBLIGACIONES DE LA AGENCIA: Pagar.')
+        download.side_effect = [b'%PDF-corrupt', valid]
+        rows = [{'nombre_archivo': name, 'extensi_n': 'pdf', 'url_descarga_documento': str(i)}
+                for i, name in enumerate(['MINUTA ATENEA-582-2025.pdf', 'CONVENIO ATENEA-582-2025.pdf'])]
+        selected, _, failures = select_source(rows, 'ATENEA-582-2025', '', None)
+        self.assertEqual(selected[1], valid)
+        self.assertTrue(failures)
+
     @patch('src.integrations.secop_sources.extract_contract')
     @patch('src.integrations.secop_sources.pdf_text')
     @patch('src.integrations.secop_documents.download_document')

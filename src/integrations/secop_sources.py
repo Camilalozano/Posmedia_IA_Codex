@@ -3,6 +3,8 @@ import hashlib
 import io
 import re
 import zipfile
+import zlib
+from pypdf.errors import PyPdfError
 from src.config import NOT_FOUND
 from src.extraction.pdf_reader import pdf_text
 from src.extraction.obligations import extract_obligations, normalize_for_search
@@ -80,8 +82,8 @@ def select_source(rows, reference, provider_name, opener):
                         return item, reused, failures
                     if fallback is None:
                         fallback = item
-                except ValueError as error:
+                except (ValueError, PyPdfError, RuntimeError) as error:
                     failures.append(str(source.get('nombre_archivo', 'PDF')) + ': ' + str(error))
-        except (SecopDocumentError, zipfile.BadZipFile, RuntimeError, OSError, NotImplementedError) as error:
+        except (SecopDocumentError, zipfile.BadZipFile, RuntimeError, OSError, NotImplementedError, EOFError, zlib.error) as error:
             failures.append(str(row.get('nombre_archivo', 'Documento')) + ': ' + str(error))
     return fallback, reused, failures
