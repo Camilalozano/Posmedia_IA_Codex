@@ -44,6 +44,7 @@ class SecopDocuments:
     archive_count: int = 0
     archive_inventory: list[dict] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    obligation_source: dict = field(default_factory=dict)
 
 
 def notice_uid(process_url: str) -> str:
@@ -92,7 +93,7 @@ def _api_rows(endpoint: str, params: dict, opener=urlopen) -> list[dict]:
         result = json.loads(data.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
         raise SecopDocumentError('Datos Abiertos de SECOP devolvió una respuesta incompatible.') from None
-    if not isinstance(result, list):
+    if not isinstance(result, list) or not all(isinstance(row, dict) for row in result):
         raise SecopDocumentError('Datos Abiertos de SECOP devolvió una respuesta incompatible.')
     return result
 
@@ -191,11 +192,16 @@ def build_documents_archive(rows: list[dict], reference: str, reused: dict[str, 
             data = reused.get(url)
             try:
                 if data is None:
-                    data = download_document(url, opener=opener)
-                total += len(data)
-                if total > MAX_ARCHIVE_SOURCE_BYTES:
+                    remaining = MAX_ARCHIVE_SOURCE_BYTES - total
+                    if remaining <= 0:
+                        raise SecopDocumentError('Se alcanzó el límite total de 100 MB.')
+                    data = download_document(url, limit=min(MAX_DOCUMENT_BYTES, remaining), opener=opener)
+                if total + len(data) > MAX_ARCHIVE_SOURCE_BYTES:
                     raise SecopDocumentError('Los documentos descargados superan 100 MB.')
+                if data.lstrip()[:100].lower().startswith((b'<html', b'<!doctype html')):
+                    raise SecopDocumentError('SECOP devolvió una página web en lugar del archivo.')
                 archive.writestr(name, data)
+                total += len(data)
                 digest = hashlib.sha256(data).hexdigest()
             except SecopDocumentError as error:
                 data, digest, status = b'', '', 'No descargado: ' + str(error)
@@ -211,6 +217,9 @@ def build_documents_archive(rows: list[dict], reference: str, reused: dict[str, 
                 'estado': status,
                 'sha256': digest,
                 'url_descarga': url,
+                'dataset': row.get('_dataset', ''),
+                'asociacion': row.get('_asociacion', ''),
+                'proceso': row.get('proceso', ''),
             })
         manifest = io.StringIO(newline='')
         columns = list(inventory[0]) if inventory else ['estado']
@@ -343,37 +352,22 @@ def prepare_secop_documents(process_url: str, contract_id: str, reference: str,
     uid = notice_uid(process_url)
     if not re.fullmatch(r'CO1\.PCCNTR\.\d+', str(contract_id), re.I):
         raise SecopDocumentError('La base no informa un identificador contractual válido para buscar la minuta.')
-    rows = _api_rows(DOCUMENTS_API, {
-        'n_mero_de_contrato': contract_id,
-        '$limit': 500,
-    }, opener)
+    from .secop_catalog import lookup_documents
+    from .secop_sources import select_source
+    rows, notices = lookup_documents(contract_id, _api_rows, opener)
+    result = SecopDocuments(warnings=list(notices))
     if not rows:
-        raise SecopDocumentError('No se encontraron documentos públicos asociados al id_contrato consultado.')
-    minute = select_minute(rows, reference, provider_name)
-    if minute is None:
-        result = SecopDocuments()
-        try:
-            archive_name, archive_bytes, inventory, archive_warnings = build_documents_archive(
-                rows, reference, opener=opener,
-            )
-            result.archive_name = archive_name
-            result.archive_bytes = archive_bytes
-            result.archive_count = sum(item['estado'] == 'Descargado' for item in inventory)
-            result.archive_inventory = inventory
-            result.warnings.extend(archive_warnings)
-        except SecopDocumentError as error:
-            result.warnings.append(str(error))
-        result.warnings.append('No se identificó una minuta PDF dentro de los documentos asociados al contrato.')
+        result.warnings.append('No se encontraron documentos públicos en las fuentes consultadas.')
         return result
-    minute_url = document_url(minute)
-    minute_pdf = download_pdf(minute_url, opener)
-    result = SecopDocuments(
-        minute_name=str(minute.get('nombre_archivo') or f'Minuta_{reference}.pdf'),
-        minute_pdf=minute_pdf,
-    )
+    selected, reused, failures = select_source(rows, reference, provider_name, opener)
+    if selected:
+        result.minute_name, result.minute_pdf, result.obligation_source = selected
+    else:
+        result.warnings.append('No se localizó un soporte PDF legible para extraer las obligaciones de la IES.')
+    result.warnings.extend(failures[:5])
     try:
         archive_name, archive_bytes, inventory, archive_warnings = build_documents_archive(
-            rows, reference, reused={minute_url: minute_pdf}, opener=opener,
+            rows, reference, reused=reused, opener=opener,
         )
         result.archive_name = archive_name
         result.archive_bytes = archive_bytes
@@ -382,6 +376,16 @@ def prepare_secop_documents(process_url: str, contract_id: str, reference: str,
         result.warnings.extend(archive_warnings)
     except SecopDocumentError as error:
         result.warnings.append(str(error))
+        result.archive_inventory = [
+            {'nombre_archivo': row.get('nombre_archivo', ''), 'extension': row.get('extensi_n', ''),
+             'tamano_bytes': 0, 'fecha_carga': row.get('fecha_carga', ''),
+             'estado': 'Inventariado; no descargado', 'url_descarga': document_url(row),
+             'dataset': row.get('_dataset', ''), 'asociacion': row.get('_asociacion', '')}
+            for row in rows
+        ]
+    if not result.minute_pdf:
+        return result
+    minute_pdf = result.minute_pdf
     try:
         process_reference = extract_process_reference(minute_pdf)
     except ValueError:
@@ -405,3 +409,4 @@ def prepare_secop_documents(process_url: str, contract_id: str, reference: str,
     result.process_name = f'Proceso_SECOP_{process_reference}.pdf'
     result.process_pdf = build_process_pdf(process, process_url)
     return result
+

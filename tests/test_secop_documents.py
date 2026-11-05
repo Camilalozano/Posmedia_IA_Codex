@@ -78,6 +78,7 @@ class SecopDocumentTests(unittest.TestCase):
         download_url = ('https://community.secop.gov.co/Public/Archive/RetrieveFile/Index?'
                         'DocumentId=724204637&InCommunity=False')
         document_rows = [{
+            'n_mero_de_contrato': 'CO1.PCCNTR.8724386', 'proceso': 'CO1.BDOS.42',
             'nombre_archivo': 'ATENEA-582-2025 EAN.pdf',
             'extensi_n': 'pdf',
             'url_descarga_documento': {'url': download_url},
@@ -102,11 +103,14 @@ class SecopDocumentTests(unittest.TestCase):
             requests.append(request)
             parsed = urlparse(request.full_url)
             if parsed.netloc == 'www.datos.gov.co' and parsed.path.endswith('dmgg-8hin.json'):
-                self.assertEqual(parse_qs(parsed.query)['n_mero_de_contrato'], ['CO1.PCCNTR.8724386'])
+                params = parse_qs(parsed.query)
+                self.assertTrue(params.get('n_mero_de_contrato') == ['CO1.PCCNTR.8724386'] or params.get('proceso') == ['CO1.BDOS.42'])
                 return Response(json.dumps(document_rows).encode())
             if parsed.netloc == 'www.datos.gov.co' and parsed.path.endswith('p6dx-8zbt.json'):
                 self.assertEqual(parse_qs(parsed.query)['referencia_del_proceso'], ['ATENEA-IA-JE-003-2025'])
                 return Response(json.dumps(process_rows).encode())
+            if parsed.netloc == 'www.datos.gov.co':
+                return Response(b'[]')
             self.assertEqual(request.get_header('Referer'), 'https://community.secop.gov.co/')
             return Response(minute_pdf)
 
@@ -121,7 +125,7 @@ class SecopDocumentTests(unittest.TestCase):
         with zipfile.ZipFile(io.BytesIO(result.archive_bytes)) as archive:
             self.assertIn('ATENEA-582-2025 EAN.pdf', archive.namelist())
             self.assertIn('inventario_documentos_secop.csv', archive.namelist())
-        self.assertEqual(len(requests), 3)
+        self.assertEqual(len(requests), 14)
 
     def test_archive_includes_every_supported_file_without_expanding_nested_zip(self):
         base = 'https://community.secop.gov.co/Public/Archive/RetrieveFile/Index?DocumentId='
@@ -167,6 +171,7 @@ class SecopDocumentTests(unittest.TestCase):
         download_url = ('https://community.secop.gov.co/Public/Archive/RetrieveFile/Index?'
                         'DocumentId=724204637')
         document_rows = [{
+            'n_mero_de_contrato': 'CO1.PCCNTR.8724386', 'proceso': 'CO1.BDOS.42',
             'nombre_archivo': 'ATENEA-582-2025 EAN.pdf', 'extensi_n': 'pdf',
             'url_descarga_documento': {'url': download_url},
         }]
@@ -176,6 +181,8 @@ class SecopDocumentTests(unittest.TestCase):
                 return Response(json.dumps(document_rows).encode())
             if request.full_url == download_url:
                 return Response(minute_pdf)
+            if 'datos.gov.co' in request.full_url and 'p6dx-8zbt' not in request.full_url:
+                return Response(b'[]')
             raise HTTPError(request.full_url, 503, 'Unavailable', Message(), None)
 
         with patch('src.integrations.secop_documents.time.sleep'):
@@ -186,3 +193,4 @@ class SecopDocumentTests(unittest.TestCase):
         self.assertEqual(result.minute_pdf, minute_pdf)
         self.assertEqual(result.process_pdf, b'')
         self.assertTrue(any('minuta sí quedó disponible' in warning for warning in result.warnings))
+

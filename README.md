@@ -79,3 +79,32 @@ docs/validacion.md
 Los paquetes incluyen `__init__.py`. Las evidencias se procesan en memoria y no se guardan en el repositorio. No suba contratos reales, datos personales ni claves. La configuración del servicio de alojamiento debe revisarse antes de usar información real.
 
 La plantilla fuente se conserva sin cambios, con el nombre solicitado. El generador reemplaza sus datos de ejemplo en una copia y conserva el paquete Word, incluidos encabezados y pies de página.
+
+# Actualización de extracción SECOP — noviembre de 2026
+
+La consulta documental incorpora los históricos 2026, 2025, 2024, 2023, 2022 y
+hasta 2021, con paginación y deduplicación. El histórico 2025 es `h4m3-b4e2`;
+`dmgg-8hin` corresponde a 2026. Se consultan también los archivos del proceso
+vinculado, excluyendo los ligados a otros contratos. Si no hay documentos
+contractuales, se resuelve el proceso mediante el ID exacto en Contratos
+Electrónicos (`jbjy-vk9h`). Las fuentes fallidas se muestran como consulta incompleta.
+
+La selección revisa el contenido de PDF candidatos y de PDF dentro de ZIP. Si
+un archivo no contiene obligaciones específicas, continúa con los siguientes.
+Se priorizan minuta y convenio; los estudios previos pueden servir de soporte
+cuando contienen la sección específica. En archivos compartidos del proceso se
+exige comprobar la referencia contractual dentro del PDF. La descarga masiva
+conserva los ZIP originales sin expandirlos y registra fuente, asociación y
+resultado de cada archivo en su inventario.
+
+El extractor admite encabezados de IES, institución de educación superior,
+asociado y obligaciones específicas del contratista, numeración simple o
+jerárquica, saltos de página e introducciones. Separa las obligaciones de ATENEA
+y conserva la página de origen. Saltos de numeración, cierre no identificado o
+varias secciones candidatas requieren revisión visible en la interfaz y el borrador.
+La trazabilidad del informe conserva la URL, fuente histórica, proceso y ZIP del
+soporte automático, además del SHA-256 del PDF.
+
+Los PDF escaneados requieren OCR previo. La cobertura depende de lo publicado en
+Datos Abiertos; el inventario puede diferir del portal SECOP por rezagos de publicación.
+

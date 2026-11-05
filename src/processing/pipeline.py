@@ -23,7 +23,7 @@ def extract_minute(name, data):
         obligations.append(Field(
             str(item['numero_obligacion']) + '. ' + body,
             name + ' · ' + location,
-            'alto' if item.get('pagina') else 'medio',
+            'alto' if item.get('pagina') and not item.get('advertencias') else 'medio',
         ))
     return fields, obligations
 
@@ -58,6 +58,8 @@ def prepare_report(process_number, contract, uploads, lookup=None, secop_documen
         warnings.extend(lookup.warnings)
     if not obligations:
         warnings.append('No se extrajeron obligaciones IES. Agréguelas antes de generar el informe.')
+    elif any(item.confidence == 'medio' for item in obligations):
+        warnings.append('Revise el cierre, la numeración y la sección seleccionada de las obligaciones en el PDF de origen.')
     evidence = []
     for index, (name, data) in enumerate(expand_inputs(uploads), 1):
         digest = hashlib.sha256(data).hexdigest()
@@ -76,6 +78,14 @@ def prepare_report(process_number, contract, uploads, lookup=None, secop_documen
             'sha256': hashlib.sha256(contract[1]).hexdigest(),
             'origin': 'SECOP automático o carga manual, según la selección mostrada en la interfaz',
         }
+        source = getattr(secop_documents, 'obligation_source', {}) if secop_documents else {}
+        if source and contract[1] == getattr(secop_documents, 'minute_pdf', b''):
+            report.contract_source['minute'].update({
+                'url_secop': source.get('url_descarga_documento'),
+                'dataset': source.get('_dataset'), 'asociacion': source.get('_asociacion'),
+                'proceso': source.get('proceso'), 'archivo_zip': source.get('_archivo_zip'),
+                'zip_sha256': source.get('_zip_sha256'),
+            })
     archive_bytes = getattr(secop_documents, 'archive_bytes', b'') if secop_documents else b''
     if archive_bytes:
         report.contract_source['secop_documents_archive'] = {
@@ -91,3 +101,4 @@ def prepare_report(process_number, contract, uploads, lookup=None, secop_documen
             'raw_advance': lookup.raw_advance, 'advance_scale': 'valor original; sin transformación',
         })
     return report
+

@@ -115,9 +115,16 @@ def lookup_panel(process):
                 elif documents.minute_pdf:
                     st.success('La minuta oficial está disponible para descarga.')
                 if documents.minute_pdf:
+                    source = getattr(documents, 'obligation_source', {})
+                    if source:
+                        st.caption('Soporte de obligaciones: ' + documents.minute_name
+                                   + ' · ' + str(source.get('_dataset', ''))
+                                   + ' · asociado al ' + str(source.get('_asociacion', 'contrato')))
+                        if source.get('_archivo_zip'):
+                            st.caption('PDF recuperado del ZIP: ' + source['_archivo_zip'])
                     st.download_button(
                         'Descargar minuta oficial (PDF)', documents.minute_pdf,
-                        file_name=documents.minute_name, mime='application/pdf',
+                        file_name=documents.minute_name.replace('\\', '/').rsplit('/', 1)[-1], mime='application/pdf',
                         key='descargar_minuta_secop',
                     )
                 if documents.process_pdf:
@@ -142,6 +149,7 @@ def lookup_panel(process):
                         f"El ZIP contiene {getattr(documents, 'archive_count', 0)} documentos descargados y un inventario CSV. "
                         'Se conserva como insumo para las siguientes etapas de análisis.'
                     )
+                if getattr(documents, 'archive_inventory', []):
                     with st.expander('Ver inventario de documentos SECOP'):
                         st.dataframe([
                             {
@@ -150,6 +158,9 @@ def lookup_panel(process):
                                 'Tamaño': f"{item['tamano_bytes'] / 1024:,.1f} KB",
                                 'Fecha de carga': item['fecha_carga'],
                                 'Estado': item['estado'],
+                                'Fuente': item.get('dataset', ''),
+                                'Asociación': item.get('asociacion', ''),
+                                'Descarga': item.get('url_descarga', ''),
                             }
                             for item in getattr(documents, 'archive_inventory', [])
                         ], hide_index=True)
@@ -177,6 +188,8 @@ def lookup_panel(process):
                     if extracted_rows:
                         st.dataframe(extracted_rows, hide_index=True)
                     if obligations:
+                        if any(item.confidence == 'medio' for item in obligations):
+                            st.warning('Revise el cierre, la numeración y la sección elegida de las obligaciones en el PDF de origen.')
                         st.markdown('**Obligaciones específicas extraídas**')
                         st.dataframe([
                             {
@@ -202,3 +215,4 @@ def lookup_panel(process):
                 st.warning(warning)
     # El token también invalida borradores al cambiar la base, aunque no se consulte.
     return result, repr(token), st.session_state.get('secop_documents')
+
