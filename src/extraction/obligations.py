@@ -76,13 +76,13 @@ def extract_obligations(text: str, pages: list[str] | None = None) -> list[dict]
         original_begin = offsets[begin] if begin < len(offsets) else len(original)
         original_end = offsets[end] if end < len(offsets) else len(original)
         section = original[original_begin:original_end]
-        markers = list(re.finditer(r'(?<![\d\w.])\(?(?P<prefix>(?:\d{1,2}\.)*)(?P<number>\d{1,2})(?:[.)]+|(?<=\d)(?=\s))\s+(?=[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])', section))
+        markers = list(re.finditer(r'(?<![\d\w.])\(?(?P<prefix>(?:\d{1,2}\.)+)?(?P<number>\d{1,2})(?(prefix)[.)]*|[.)]+)\s+(?=[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])', section))
         selected, prefix = [], None
         for marker in markers:
             number = int(marker.group('number'))
             if prefix is None and number == 1:
-                prefix = marker.group('prefix')
-            if prefix is not None and marker.group('prefix') == prefix and (not selected or number > int(selected[-1].group('number'))):
+                prefix = marker.group('prefix') or ''
+            if prefix is not None and (marker.group('prefix') or '') == prefix and (not selected or number > int(selected[-1].group('number'))):
                 selected.append(marker)
         items = []
         numbers = [int(m.group('number')) for m in selected]

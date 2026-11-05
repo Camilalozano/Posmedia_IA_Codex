@@ -49,6 +49,14 @@ class CatalogTests(unittest.TestCase):
 
 
 class ExtractionTests(unittest.TestCase):
+    def test_numbers_inside_text_are_not_obligation_markers(self):
+        text = ('OBLIGACIONES DE LA IES: 1. Reportar máximo 30 días después. '
+                '2. Suscribir dentro de los 5 días siguientes. '
+                '3. Atender a más de 20 beneficiarios. D. OBLIGACIONES DE LA AGENCIA: Pagar.')
+        rows = extract_obligations(text)
+        self.assertEqual([r['numero_obligacion'] for r in rows], [1, 2, 3])
+        self.assertIn('30 días después.', rows[0]['obligaciones_especificas'])
+
     def test_generic_specific_section_intro_does_not_close_section(self):
         pages = ['OBLIGACIONES ESPECÍFICAS DEL CONTRATISTA\nAdemás de las obligaciones generales:\n'
                  '2.1 apoyar la gestión.\n2.2 entregar informes.\n3. MODALIDAD DE SELECCIÓN\nTexto ajeno.']

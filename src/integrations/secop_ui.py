@@ -6,16 +6,18 @@ from src.integrations.secop_documents import notice_uid, prepare_secop_documents
 from src.integrations.secop_lookup import lookup_oracle, normalize_reference
 from src.processing.pipeline import extract_minute
 
+EXTRACTION_REVISION = '2026-11-05.2'
+
 
 @st.cache_data(ttl=300, show_spinner=False)
-def cached_secop_documents(process_url, contract_id, reference, provider_document, provider_name):
+def cached_secop_documents(process_url, contract_id, reference, provider_document, provider_name, revision=EXTRACTION_REVISION):
     return prepare_secop_documents(
         process_url, contract_id, reference, provider_document, provider_name,
     )
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def cached_minute_extraction(name, data):
+def cached_minute_extraction(name, data, revision=EXTRACTION_REVISION):
     return extract_minute(name, data)
 
 
@@ -48,7 +50,7 @@ def lookup_panel(process):
         else:
             st.warning('La conexión automática no está configurada. Ingrese un PAR válido para consultar la base de Oracle.')
         par_digest = hashlib.sha256(par_url.encode()).hexdigest() if par_url else ''
-        source_token = ('oracle', par_digest)
+        source_token = ('oracle', par_digest, EXTRACTION_REVISION)
         token = (normalize_reference(process), source_token)
         if st.session_state.get('secop_token') != token:
             st.session_state.pop('secop_result', None)
