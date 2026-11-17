@@ -64,12 +64,27 @@ class LookupTests(unittest.TestCase):
             with self.subTest(opener=opener), self.assertRaises(OracleConnectionError) as raised:
                 download_oracle_csv(url, opener=opener)
             message = str(raised.exception)
-            self.assertIn('nuevo PAR', message)
-            self.assertIn('Actualizar ruta PAR', message)
+            self.assertIn('nuevo enlace', message)
+            self.assertIn('Actualizar URL', message)
             self.assertNotIn('very-secret', message)
 
+    def test_azure_download_and_lookup(self):
+        data = csv_fixture([example()])
+        class Response:
+            headers = {}
+            def __enter__(self): return self
+            def __exit__(self, *args): pass
+            def read(self, size): return data[:size]
+        url = 'https://salagodatosateneadev.blob.core.windows.net/sandbox/analisis_contratacion/gold_exports/tabla_maestra_completa/tabla_maestra_completa.csv?sig=fictional'
+        result = lookup_oracle(url, 'ATENEA-582-2025', opener=lambda request, timeout: Response())
+        self.assertIn('Azure Blob Storage', result.source)
+        self.assertNotIn('fictional', result.source)
+        for bad in [url.replace('https:', 'http:'), url.replace('.net/', '.net.evil.test/'), url.replace('/sandbox/', '/other/')]:
+            with self.assertRaises(OracleConnectionError):
+                download_oracle_csv(bad)
+
     def test_oracle_rejects_wrong_destination(self):
-        with self.assertRaisesRegex(OracleConnectionError, 'PAR inválido'):
+        with self.assertRaisesRegex(OracleConnectionError, 'URL inválida'):
             download_oracle_csv('https://example.com/file.csv')
 
     def test_xlsx_reader_and_empty_other_sheet(self):
