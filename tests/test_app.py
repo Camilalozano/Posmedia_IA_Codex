@@ -14,7 +14,7 @@ class AppTests(unittest.TestCase):
     def test_previous_session_without_archive_fields_does_not_crash(self):
         app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=20).run()
         self.assertTrue(any(
-            item.label == 'Actualizar ruta PAR al archivo' and item.proto.type == 1
+            item.label == 'Actualizar URL de la base' and item.proto.type == 1
             for item in app.text_input
         ))
         self.assertFalse(any(item.key == 'secop_base' for item in app.file_uploader))
@@ -102,9 +102,9 @@ class AppTests(unittest.TestCase):
             app.run()
             app.text_input[0].set_value('ATENEA-582-2025')
             with patch('src.integrations.secop_ui.lookup_oracle', side_effect=RuntimeError(
-                    'No fue posible conectar con la base de Oracle. Revisa e ingresa un nuevo PAR en el campo “Actualizar ruta PAR al archivo” y vuelve a intentar.')):
+                    'No fue posible conectar con la base de Oracle. Revisa e ingresa un nuevo enlace en el campo “Actualizar URL de la base” y vuelve a intentar.')):
                 app.button(key='consultar_secop').click().run()
-            self.assertTrue(any('nuevo PAR' in item.value and 'Actualizar ruta PAR' in item.value for item in app.error))
+            self.assertTrue(any('nuevo enlace' in item.value and 'Actualizar URL de la base' in item.value for item in app.error))
 
     def test_lookup_exposes_process_link_and_two_pdfs(self):
         minute_pdf = (ROOT / 'tests/fixtures/minuta_ejemplo.pdf').read_bytes()
