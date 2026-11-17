@@ -23,7 +23,7 @@ def cached_minute_extraction(name, data, revision=EXTRACTION_REVISION):
 
 def configured_par():
     try:
-        return str(st.secrets.get('ORACLE_PAR_URL', '')).strip()
+        return str(st.secrets.get('SECOP_CSV_URL') or st.secrets.get('ORACLE_PAR_URL', '')).strip()
     except Exception:
         return ''
 
@@ -33,22 +33,22 @@ def lookup_panel(process):
     with st.expander('Consultar datos de la base contractual', expanded=True):
         configured_url = configured_par()
         par_override = st.text_input(
-            'Actualizar ruta PAR al archivo',
+            'Actualizar URL de la base',
             type='password',
             key='oracle_par_override',
-            placeholder='https://objectstorage.us-ashburn-1.oraclecloud.com/p/...',
+            placeholder='https://salagodatosateneadev.blob.core.windows.net/…',
             help=(
-                'Pegue aquí un PAR nuevo cuando el enlace configurado haya vencido. '
+                'Pegue aquí un enlace nuevo cuando el enlace configurado haya vencido. '
                 'Se utilizará durante esta sesión y no se incluirá en la trazabilidad.'
             ),
         ).strip()
         par_url = par_override or configured_url
         if par_override:
-            st.info('Se usará el PAR ingresado en esta sesión.')
+            st.info('Se usará el enlace ingresado en esta sesión.')
         elif configured_url:
-            st.info('La consulta automática a Oracle está configurada. Puede ingresar arriba un PAR nuevo para reemplazarla durante esta sesión.')
+            st.info('La consulta automática a la base SECOP está configurada. Puede ingresar arriba un enlace nuevo para reemplazarla durante esta sesión.')
         else:
-            st.warning('La conexión automática no está configurada. Ingrese un PAR válido para consultar la base de Oracle.')
+            st.warning('La conexión automática no está configurada. Ingrese una URL válida para consultar la base SECOP.')
         par_digest = hashlib.sha256(par_url.encode()).hexdigest() if par_url else ''
         source_token = ('oracle', par_digest, EXTRACTION_REVISION)
         token = (normalize_reference(process), source_token)
@@ -71,7 +71,7 @@ def lookup_panel(process):
                         result = lookup_oracle(par_url, process)
                     else:
                         result = None
-                        st.warning('Ingrese un PAR válido antes de consultar.')
+                        st.warning('Ingrese una URL válida antes de consultar.')
                 if result is None and par_url:
                     st.warning('No se encontró esa referencia en la base consultada.')
                 elif result is not None:
