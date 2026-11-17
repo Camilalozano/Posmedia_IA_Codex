@@ -37,6 +37,8 @@ FIELD_MAP = {
 MAX_BYTES = 50 * 1024 * 1024
 MAX_EXPANDED_BYTES = 250 * 1024 * 1024
 MAX_ROWS = 200_000
+AZURE_HOST = 'salagodatosateneadev.blob.core.windows.net'
+AZURE_CSV_PATH = '/sandbox/analisis_contratacion/gold_exports/tabla_maestra_completa/tabla_maestra_completa.csv'
 ORACLE_HOST = 'objectstorage.us-ashburn-1.oraclecloud.com'
 
 
@@ -47,8 +49,8 @@ class OracleConnectionError(RuntimeError):
 def oracle_connection_message(detail=''):
     suffix = f' ({detail})' if detail else ''
     return (
-        'No fue posible conectar con la base de Oracle' + suffix + '. '
-        'Revisa e ingresa un nuevo PAR en el campo “Actualizar ruta PAR al archivo” '
+        'No fue posible conectar con la base SECOP' + suffix + '. '
+        'Revisa e ingresa un nuevo enlace en el campo “Actualizar URL de la base” '
         'y vuelve a intentar.'
     )
 
@@ -196,8 +198,9 @@ def lookup_file(filename, data, query):
 def download_oracle_csv(par_url, timeout=30, opener=urlopen):
     """Descarga el CSV configurado, con límites y mensajes que no exponen el PAR."""
     parsed = urlparse(str(par_url).strip())
-    if parsed.scheme != 'https' or parsed.hostname != ORACLE_HOST:
-        raise OracleConnectionError(oracle_connection_message('PAR inválido'))
+    if parsed.scheme != 'https' or not (parsed.hostname == ORACLE_HOST or
+            (parsed.hostname == AZURE_HOST and parsed.path == AZURE_CSV_PATH)):
+        raise OracleConnectionError(oracle_connection_message('URL inválida'))
     request = Request(str(par_url).strip(), headers={'User-Agent': 'Posmedia-IA-Codex/0.3'})
     try:
         with opener(request, timeout=timeout) as response:
@@ -225,7 +228,7 @@ def download_oracle_csv(par_url, timeout=30, opener=urlopen):
 def lookup_oracle(par_url, query, opener=urlopen):
     data = download_oracle_csv(par_url, opener=opener)
     try:
-        return lookup_file('Oracle Object Storage · tabla_maestra_completa.csv', data, query)
+        return lookup_file(('Azure Blob Storage' if urlparse(par_url).hostname == AZURE_HOST else 'Oracle Object Storage') + ' · tabla_maestra_completa.csv', data, query)
     except (UnicodeDecodeError, ValueError) as error:
         # El enlace puede apuntar a un objeto distinto o a una exportación incompatible.
         raise OracleConnectionError(oracle_connection_message('archivo incompatible: ' + str(error))) from None
